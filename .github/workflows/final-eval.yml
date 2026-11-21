@@ -8,6 +8,14 @@ name: Final mission evaluation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'eval/**'
+    paths:
+      - 'internal/**'
+      - 'cmd/**'
+      - 'evaluation/**'
+      - '.github/workflows/final-eval.yml'
 
 permissions:
   contents: read
