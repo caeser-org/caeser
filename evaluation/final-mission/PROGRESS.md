@@ -49,6 +49,21 @@
   (adversarial #10). Removed the now-unused `indexOperands`/`usesLen`.
 - Negative + positive tests added. `go test ./...` PASS, vet/gofmt clean.
 
+## Session 2026-11-22 (final, continued — CI + Phase F infrastructure)
+- Used GitHub Actions (push access verified: `Yashbhu` is admin on
+  `ceaser-org/ceaser`). Pushed branch `eval/final-mission-2026-11-22`.
+- `.github/workflows/final-eval.yml` runs unit tests/vet, fixture verification,
+  the six-case paired evaluation, and the holdout job on a hosted runner.
+- CI run `44958895228`: paired **6/6 ON, 5/6 OFF, 0 regressions, 0 root changes**
+  (independent reproduction of the local result).
+- CI run `44959160207`: same + holdout job (0 configured cases; infra verified).
+- Added `evaluation/scripts/holdout-run.sh`, `evaluation/holdout/{manifest.json,
+  README.md}` — verified-overlay independent holdout pipeline (empty until curated
+  real cases are added).
+- Note: one pre-existing environment-flaky `internal/execution` test fails on the
+  runner; the workflow gates on mission packages and runs the full suite
+  informationally.
+
 ## Next exact command for a future session
 ```
 go test ./... && go run ./cmd/corpus-score --verify && bash evaluation/scripts/causal-trace-eval.sh

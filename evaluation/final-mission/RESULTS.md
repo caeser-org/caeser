@@ -68,10 +68,25 @@ Defect hypotheses: `go-u008`, `go-u014` (`missing_guard`, `source_pattern`).
 establish generalization or defect-operation accuracy.
 
 ## Independent evaluation
-Not run. **BLOCKED** by environment disk (1.7 Gi free). The fixture-integrity
-infra (`internal/evalcorpus.VerifyFixture`, `cmd/corpus-score --verify`), the
-collection protocol, and the paired runner are prepared and verified; no
-independent metric is claimed.
+Independent **infrastructure is now runnable in CI** (GitHub Actions), which was
+the disk blocker:
+- `evaluation/scripts/holdout-run.sh` + `evaluation/holdout/manifest.json` +
+  `evaluation/holdout/README.md`: clone base revision, fetch the exact injected
+  test(s) from the fix revision, **verify SHA-256**, run the production engine,
+  score against the reviewed culprit. Manifest starts empty; no fabricated cases.
+- `.github/workflows/final-eval.yml` runs the six-case paired evaluation and the
+  holdout job on a GitHub-hosted runner.
+
+CI evidence (clean runners, `ceaser-org/ceaser`):
+- Run `44958895228` — paired ON/OFF: **6/6 ON, 5/6 OFF, 0 regressions, 0
+  root-cause changes** (independently reproduced, matches local).
+- Run `44959160207` — same, plus the holdout job ran with **0 configured cases**
+  (infrastructure verified; no independent metric claimed yet).
+
+The only CI test failure encountered was a **pre-existing environment-flaky**
+`internal/execution` process-group test on the runner, unrelated to this work;
+the workflow gates strictly on the mission packages and runs the full suite
+informationally.
 
 ## Runtime
 Within noise (1–5 s per case, `go/packages`-dominated); defect assessment is a
