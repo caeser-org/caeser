@@ -206,7 +206,7 @@ func BuildLikelyFunction(report Report) LikelyFunction {
 
 func leadConfidence(entry CandidateReportEntry) string {
 	switch entry.Kind {
-	case "observed_stack", "probe_operation":
+	case "observed_stack", "probe_operation", "causal_producer":
 		return "medium"
 	case "inferred_call":
 		if strings.Contains(entry.Reason, "resolved") || strings.Contains(entry.Reason, "value") {
@@ -416,7 +416,7 @@ func likelyFunctionEntry(entry CandidateReportEntry) bool {
 		return false
 	}
 	switch entry.Kind {
-	case "observed_stack", "inferred_call", "inferred_source", "probe_operation":
+	case "observed_stack", "inferred_call", "inferred_source", "probe_operation", "causal_producer":
 		return true
 	default:
 		return false
@@ -427,4 +427,17 @@ func likelyFunctionEntry(entry CandidateReportEntry) bool {
 // function label from a CodeLocation without materializing the full tier.
 func candidateFunctionFromLocation(loc domain.CodeLocation) string {
 	return candidateFunction(loc.SymbolIdentity)
+}
+
+// applyLikelyFunction builds the presentation-only candidate, likely-function
+// and causal-explanation tiers. It is derived from existing report fields and
+// cannot change classification, evidence, root-cause status, confidence,
+// verification, or abstention.
+func applyLikelyFunction(report *Report) {
+	shortlist := BuildCandidateReport(*report)
+	report.CandidateReport = &shortlist
+	likely := BuildLikelyFunction(*report)
+	report.LikelyFunction = &likely
+	explanation := BuildCausalExplanation(*report)
+	report.CausalExplanation = &explanation
 }

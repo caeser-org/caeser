@@ -1,0 +1,10 @@
+# id,repo,base_sha,failure_log,reviewed_culprit
+# Panic/anomaly cases only: the tracer anchors on the implementation frame in
+# the original stack, which exists in the base source, so the missing injected
+# regression test is not required. Assertion cases are excluded.
+go-u005,prometheus/node_exporter,2ae7dd881ed9e551fb75abc811bef974b2c31819,evaluation/probe-rerun/artifacts/go-u005/controlled-go-prometheus-node_exporter-3887-44305238978/base-failure.log,textFileCollector.Update
+go-u008,micromdm/micromdm,904493b9500ffc8a21846846781e362f5c612107,evaluation/probe-rerun/artifacts/go-u008/controlled-go-micromdm-micromdm-1129-44305266597/base-failure.log,UnmarshalCheckinEvent
+go-u009,go-viper/mapstructure,52aa5c6dc1d27226460807054ca2107b2d54fb2d,evaluation/probe-rerun/artifacts/go-u009/controlled-go-go-viper-mapstructure-203-44305274768/base-failure.log,RecursiveStructToMapHookFunc
+go-u010,1set/starlight,59694c477ef91d0c1ddf1f0c7bcfad0594c3051c,evaluation/probe-rerun/artifacts/go-u010/controlled-go-1set-starlight-86-44305284169/base-failure.log,toValue
+go-u011,cli/cli,18138654f3598ebe031ad7b661c903188f0f1dc9,evaluation/probe-rerun/artifacts/go-u011/controlled-go-cli-cli-15005-44305292035/base-failure.log,addParamsSlice
+go-u014,1set/starlight,59694c477ef91d0c1ddf1f0c7bcfad0594c3051c,evaluation/probe-rerun/artifacts/go-u014/controlled-go-1set-starlight-86-44305324681/base-failure.log,toValue

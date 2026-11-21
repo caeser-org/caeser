@@ -1,0 +1,76 @@
+name: Final mission evaluation
+
+# Runs the deterministic engine's paired causal-trace evaluation on a
+# GitHub-hosted runner (ample disk + network), which the local environment could
+# not host. It builds the engine from this commit, verifies corpus fixtures, runs
+# the paired ON/OFF evaluation across the reproducible cases, and uploads the
+# results and per-case reports.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: '**/go.sum'
+
+      - name: Build engine
+        run: go build -o "$RUNNER_TEMP/caeser" ./cmd/caeser
+
+      - name: Unit tests and vet
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Verify corpus fixtures
+        run: go run ./cmd/corpus-score --verify
+
+      - name: Paired causal-trace evaluation (ON vs OFF)
+        env:
+          CAESER: ${{ runner.temp }}/caeser
+          CACHE: ${{ runner.temp }}/causal-eval
+          OUT: ${{ runner.temp }}/paired.json
+        run: |
+          set -uo pipefail
+          bash evaluation/scripts/causal-trace-eval.sh || true
+          cp "$OUT" "$RUNNER_TEMP/paired.json" 2>/dev/null || true
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo "## Final mission evaluation"
+            echo
+            if [ -s "$RUNNER_TEMP/paired.json" ]; then
+              jq '{cases:length,
+                   hit_on:([.[]|select(.hit_on)]|length),
+                   hit_off:([.[]|select(.hit_off)]|length),
+                   regressed:[.[]|select(.hit_off and (.hit_on|not))|.id],
+                   root_changed:[.[]|select(.root_on!=.root_off)|.id],
+                   traces:[.[]|{id,trace:.trace_status,primary_on,primary_off}]}' \
+                "$RUNNER_TEMP/paired.json" || true
+            else
+              echo "no results produced"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-mission-eval
+          path: |
+            ${{ runner.temp }}/paired.json
+            ${{ runner.temp }}/causal-eval
+          if-no-files-found: warn

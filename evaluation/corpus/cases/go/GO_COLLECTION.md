@@ -84,6 +84,45 @@ note what was removed in `disagreement_notes`.
 7. Add the case ID to `manifest.yaml` under the appropriate category.
 8. Run `go test ./internal/evalcorpus/...` to verify the case loads and the log hash matches.
 
+## Reproducible injected tests (required for failure-inducing changes)
+
+A case whose failure only occurs after a regression test is added must preserve
+that exact test file, not re-derive it from an upstream revision. This is what
+makes an assertion case replayable.
+
+```
+cases/go/<case-id>/
+  metadata.yaml
+  expected.yaml
+  failure.log
+  injected/<repo-relative path>   # the exact overlaid test file(s)
+```
+
+metadata.yaml additions:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `injected_tests` | when a test was overlaid | list of `{path, sha256}`; `path` is repo-relative, `sha256` is the digest of `injected/<path>` |
+| `provenance` | when `injected_tests` is set | how the fixture was produced (harness run, PR, merge commit, redaction) |
+| `go_version` | no | toolchain used to produce the failure |
+| `environment` | no | key/value execution configuration (env vars, build tags) |
+
+The loader verifies every injected-test digest before any evaluation runs, and
+`internal/evalcorpus.ApplyInjectedTests` copies the preserved files into a
+checkout for the run. A changed or missing injection fails verification rather
+than silently altering a result.
+
+Verify the whole corpus:
+
+```
+go run ./cmd/corpus-score --verify
+```
+
+Do not substitute the upstream test file for a lost injected test: line numbers
+and assertions differ, so the failure log no longer corresponds to the source.
+If the injected test is lost, mark the case **not replayable** and exclude it
+from exact-function evaluation.
+
 ## Redistribution
 
 Only include logs you have permission to redistribute. If a log cannot be

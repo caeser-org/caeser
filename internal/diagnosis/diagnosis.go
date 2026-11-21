@@ -468,6 +468,7 @@ type Report struct {
 	Candidates                 []domain.CandidateLocation         `json:"candidates,omitempty"`
 	CandidateReport            *CandidateReport                   `json:"candidate_report,omitempty"`
 	LikelyFunction             *LikelyFunction                    `json:"likely_function,omitempty"`
+	CausalExplanation          *CausalExplanation                 `json:"causal_explanation,omitempty"`
 	Deltas                     []domain.CodeDelta                 `json:"deltas,omitempty"`
 	ExecutionPaths             []domain.ExecutionPath             `json:"execution_paths,omitempty"`
 	Relationships              []domain.Relationship              `json:"relationships,omitempty"`
@@ -476,6 +477,7 @@ type Report struct {
 	FailureIncidents           []FailureIncident                  `json:"failure_incidents,omitempty"`
 	RootCause                  RootCauseAssessment                `json:"root_cause"`
 	CausalChain                *DeterministicCausalChain          `json:"causal_chain,omitempty"`
+	CausalTrace                *CausalTrace                       `json:"causal_trace,omitempty"`
 	MechanismObservation       *RuntimeMechanismObservation       `json:"mechanism_observation,omitempty"`
 	SSAAssertionTrace          *programrepo.SSATrace              `json:"ssa_assertion_trace,omitempty"`
 	SSAAnalysisFailures        []programrepo.SSAAnalysisFailure   `json:"ssa_analysis_failures,omitempty"`
@@ -580,6 +582,9 @@ type Config struct {
 	// FastPath publishes the preliminary result without base comparison or
 	// repository localization when reproduction is inconclusive.
 	FastPath bool
+	// NoCausalTrace disables backward causal tracing. It exists only for
+	// paired evaluation (tracer on/off); the production default is enabled.
+	NoCausalTrace bool
 	// Evidence is an optional normalized CI input. When set, Run performs an
 	// evidence-first diagnosis. Executor remains unused unless the explicit Go
 	// cold path is enabled.
@@ -611,6 +616,9 @@ type EventRecord struct {
 
 // Run performs the full diagnosis workflow.
 func Run(ctx context.Context, cfg Config) (result Report, resultErr error) {
+	if !cfg.NoCausalTrace && os.Getenv("CAESER_NO_CAUSAL_TRACE") == "1" {
+		cfg.NoCausalTrace = true
+	}
 	if cfg.Evidence != nil {
 		return diagnoseNormalizedEvidence(ctx, cfg, *cfg.Evidence)
 	}
@@ -859,10 +867,7 @@ func Run(ctx context.Context, cfg Config) (result Report, resultErr error) {
 			report.Partial = true
 		}
 		report.RootCause = assessRootCause(report)
-		shortlist := BuildCandidateReport(report)
-		report.CandidateReport = &shortlist
-		likely := BuildLikelyFunction(report)
-		report.LikelyFunction = &likely
+		applyLikelyFunction(&report)
 		return report, nil
 	}
 
@@ -995,10 +1000,7 @@ func Run(ctx context.Context, cfg Config) (result Report, resultErr error) {
 	// evaluated its objective predicates and hypotheses. Preliminary findings
 	// must not freeze the final causal status.
 	report.RootCause = assessRootCause(report)
-	shortlist := BuildCandidateReport(report)
-	report.CandidateReport = &shortlist
-	likely := BuildLikelyFunction(report)
-	report.LikelyFunction = &likely
+	applyLikelyFunction(&report)
 	d.emit(EventLocalizationCompleted, domain.StatusFormingHypotheses, locStatus(localization))
 
 	report.Claims = buildClaims(report.Classification, localization, report.Evidence)
@@ -1158,10 +1160,7 @@ func diagnoseNormalizedEvidence(ctx context.Context, cfg Config, evidence Normal
 	report.RootCause = assessRootCause(report)
 	// Presentation-only shortlist. Built after assessment so it cannot affect
 	// root-cause promotion or any verification gate.
-	shortlist := BuildCandidateReport(report)
-	report.CandidateReport = &shortlist
-	likely := BuildLikelyFunction(report)
-	report.LikelyFunction = &likely
+	applyLikelyFunction(&report)
 	report.Claims = buildClaims(report.Classification, report.Localization, report.Evidence)
 	report.Confidence = confidence(report.Classification, report.Localization, report.Uncertainty)
 	report.Uncertainty = append(report.Uncertainty, defaultUncertainty(report.Classification, report.Localization)...)

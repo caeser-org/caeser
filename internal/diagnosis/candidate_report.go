@@ -2,6 +2,8 @@ package diagnosis
 
 import (
 	"fmt"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -105,7 +107,56 @@ func BuildCandidateReport(report Report) CandidateReport {
 	}
 
 	// Ranked candidates may be verified call edges or weaker source relations.
-	for _, candidate := range report.Candidates {
+	// Order them by evidence strength before the bounded report is assembled:
+	// directly observed execution evidence first, then functions the named
+	// failing test actually reaches through a type-resolved (verified) call
+	// path, then the remaining inferred fan-out. The failing test's verified
+	// path is existing evidence (execution_paths); using it to order leads is
+	// not a new analysis and does not change any candidate's score or kind.
+	pathTargets := failingTestPathTargets(report)
+	frames := observedFrameOrder(report)
+	candidatesByEvidence := append([]domain.CandidateLocation(nil), report.Candidates...)
+	evidenceRank := func(candidate domain.CandidateLocation) int {
+		provenance := candidate.Location.Provenance
+		if provenance == "causal_producer" {
+			if report.CausalTrace != nil && report.CausalTrace.Supersedes && report.CausalTrace.Producer != nil &&
+				candidate.Location.SymbolIdentity == report.CausalTrace.Producer.Identity {
+				return -1
+			}
+			return 1
+		}
+		if candidate.Score.ExecutionRelevance > 0 || provenance == "enclosing_symbol" ||
+			provenance == "direct_stack_frame" || provenance == "observed_frame" {
+			return 0
+		}
+		if pathTargets[fileFunctionKey(candidate.Location.FilePath, candidateFunction(candidate.Location.SymbolIdentity))] {
+			return 1
+		}
+		return 2
+	}
+	sort.SliceStable(candidatesByEvidence, func(i, j int) bool {
+		a, b := candidatesByEvidence[i], candidatesByEvidence[j]
+		if ra, rb := evidenceRank(a), evidenceRank(b); ra != rb {
+			return ra < rb
+		}
+		// Within observed execution evidence, prefer the innermost reported
+		// frame. The failure happened at the deepest frame, so the function that
+		// encloses it is stronger evidence than an enclosing caller. Frame order
+		// comes from the original failure evidence, never from inference.
+		fa, sa, oka := enclosingFrameRank(a.Location, frames)
+		fb, sb, okb := enclosingFrameRank(b.Location, frames)
+		if oka != okb {
+			return oka
+		}
+		if oka && fa != fb {
+			return fa < fb
+		}
+		if oka && sa != sb {
+			return sa < sb
+		}
+		return false
+	})
+	for _, candidate := range candidatesByEvidence {
 		loc := candidate.Location
 		kind, reason := inferredCandidateKind(loc.Provenance, loc.LocationType)
 		add(loc.FilePath, candidateFunction(loc.SymbolIdentity), loc.StartLine, kind, reason, candidateIDs(candidate.SupportingEvidenceIDs))
@@ -154,6 +205,8 @@ func isTestFilePath(file string) bool {
 func inferredCandidateKind(provenance, locationType string) (kind, reason string) {
 	p := strings.ToLower(provenance + " " + locationType)
 	switch {
+	case strings.Contains(p, "causal_producer"):
+		return "causal_producer", "value producer on the failure's causal path; the observed failure propagates its result or error"
 	case strings.Contains(p, "stack"), strings.Contains(p, "observed_frame"), strings.Contains(p, "enclosing_symbol"), strings.Contains(p, "frame"):
 		return "observed_stack", "candidate derived from an observed stack location"
 	case strings.Contains(p, "call"):
@@ -227,4 +280,126 @@ func evidenceForFile(evidence []EvidenceItem, file string) []string {
 		}
 	}
 	return ids
+}
+
+// failingTestPathTargets returns the file|function keys of implementation
+// functions that are on a type-resolved (verified) call path originating at a
+// named failing test. Execution paths are already built from verified static
+// call edges; this only reuses them to order existing candidates, so it neither
+// invents a relationship nor changes a candidate's evidence.
+func failingTestPathTargets(report Report) map[string]bool {
+	failing := map[string]bool{}
+	add := func(identifier string) {
+		name := testNameFromIdentifier(identifier)
+		if name == "" || name == "Test" {
+			return
+		}
+		failing[name] = true
+	}
+	for _, episode := range report.FailureEpisodes {
+		add(episode.TestIdentifier)
+	}
+	for _, incident := range report.FailureIncidents {
+		for _, test := range incident.AffectedTests {
+			add(test)
+		}
+	}
+	targets := map[string]bool{}
+	if len(failing) == 0 {
+		return targets
+	}
+	for _, path := range report.ExecutionPaths {
+		if len(path.Locations) < 2 {
+			continue
+		}
+		origin := path.Locations[0].SymbolIdentity
+		matched := false
+		for name := range failing {
+			if strings.HasSuffix(origin, ":"+name) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			continue
+		}
+		for _, location := range path.Locations[1:] {
+			if location.FilePath == "" || isTestFilePath(location.FilePath) {
+				continue
+			}
+			key := fileFunctionKey(location.FilePath, candidateFunction(location.SymbolIdentity))
+			if key != "" {
+				targets[key] = true
+			}
+		}
+	}
+	return targets
+}
+
+// frameEvidenceLine extracts the file and line from an observed stack-frame
+// evidence detail. Stack frames are recorded innermost-first.
+var frameEvidenceLine = regexp.MustCompile(`observed at (.+):(\d+);`)
+
+type observedFrame struct {
+	file string
+	line int
+}
+
+// observedFrameOrder returns the reported stack frames in evidence order
+// (innermost first). It prefers the structured incident locations and falls back
+// to the ordered stack-frame evidence. Toolchain paths are harmless: they never
+// match a repository candidate.
+func observedFrameOrder(report Report) []observedFrame {
+	var frames []observedFrame
+	for _, incident := range report.FailureIncidents {
+		for _, location := range incident.ObservedLocations {
+			if location.File != "" && location.Line > 0 {
+				frames = append(frames, observedFrame{file: location.File, line: location.Line})
+			}
+		}
+	}
+	if len(frames) > 0 {
+		return frames
+	}
+	for _, item := range report.Evidence {
+		if item.Kind != "execution_stack_frame" {
+			continue
+		}
+		if match := frameEvidenceLine.FindStringSubmatch(item.Detail); match != nil {
+			frames = append(frames, observedFrame{file: match[1], line: atoi(match[2])})
+		}
+	}
+	return frames
+}
+
+// enclosingFrameRank returns the index (innermost first) and span of the first
+// observed frame a candidate location encloses. It only matches a candidate to a
+// frame in the same file whose line falls within the candidate's declaration.
+func enclosingFrameRank(location domain.CodeLocation, frames []observedFrame) (int, int, bool) {
+	if location.FilePath == "" || len(frames) == 0 {
+		return 0, 0, false
+	}
+	base := sourceBase(location.FilePath)
+	span := location.EndLine - location.StartLine
+	for i, frame := range frames {
+		if sourceBase(frame.file) != base {
+			continue
+		}
+		if frame.line < location.StartLine {
+			continue
+		}
+		if location.EndLine > 0 && frame.line > location.EndLine {
+			continue
+		}
+		return i, span, true
+	}
+	return 0, 0, false
+}
+
+func sourceBase(path string) string {
+	path = filepathSlash(path)
+	if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		return path[idx+1:]
+	}
+	return path
 }
