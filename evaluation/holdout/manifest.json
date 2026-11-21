@@ -1,0 +1,4 @@
+{
+  "note": "Independent holdout cases. Each entry must be a real, reviewed failure: the base revision fails the injected regression test and the fix passes, with an independently reviewed culprit. The engine is NOT tuned against these cases. Do not fabricate; leave a case out if you cannot verify it. Run via evaluation/scripts/holdout-run.sh (see evaluation/holdout/README.md).",
+  "cases": []
+}

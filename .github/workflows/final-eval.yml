@@ -59,23 +59,42 @@ jobs:
           bash evaluation/scripts/causal-trace-eval.sh || true
           cp "$OUT" "$RUNNER_TEMP/paired.json" 2>/dev/null || true
 
+      - name: Independent holdout evaluation (if configured)
+        env:
+          CAESER: ${{ runner.temp }}/caeser
+          CACHE: ${{ runner.temp }}/holdout
+          OUT: ${{ runner.temp }}/holdout-results.json
+        run: |
+          set -uo pipefail
+          n=$(jq '.cases | length' evaluation/holdout/manifest.json 2>/dev/null || echo 0)
+          if [ "$n" -gt 0 ]; then
+            bash evaluation/scripts/holdout-run.sh || true
+          else
+            echo "[]" > "$RUNNER_TEMP/holdout-results.json"
+            echo "no independent holdout cases configured" 
+          fi
+
       - name: Summarize
         if: always()
         run: |
           {
             echo "## Final mission evaluation"
             echo
+            echo "### Six reproducible (development-exposed) cases"
             if [ -s "$RUNNER_TEMP/paired.json" ]; then
               jq '{cases:length,
                    hit_on:([.[]|select(.hit_on)]|length),
                    hit_off:([.[]|select(.hit_off)]|length),
                    regressed:[.[]|select(.hit_off and (.hit_on|not))|.id],
-                   root_changed:[.[]|select(.root_on!=.root_off)|.id],
-                   traces:[.[]|{id,trace:.trace_status,primary_on,primary_off}]}' \
+                   root_changed:[.[]|select(.root_on!=.root_off)|.id]}' \
                 "$RUNNER_TEMP/paired.json" || true
             else
               echo "no results produced"
             fi
+            echo
+            echo "### Independent holdout"
+            jq '{cases:length, hit:([.[]|select(.hit)]|length)}' \
+              "$RUNNER_TEMP/holdout-results.json" 2>/dev/null || echo "none configured"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload results
@@ -85,5 +104,7 @@ jobs:
           name: final-mission-eval
           path: |
             ${{ runner.temp }}/paired.json
+            ${{ runner.temp }}/holdout-results.json
             ${{ runner.temp }}/causal-eval
+            ${{ runner.temp }}/holdout
           if-no-files-found: warn
