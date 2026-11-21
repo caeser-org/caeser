@@ -49,7 +49,7 @@ for i in $(seq 0 $((n - 1))); do
   }
   run_cmd() { ( cd "$dir" && bash -lc "$cmd" ) >"$CACHE/$base_sha.out" 2>&1; echo $?; }
 
-  git -C "$dir" checkout -q "$base_sha" 2>/dev/null || true
+  git -C "$dir" reset --hard -q "$base_sha" 2>/dev/null; git -C "$dir" clean -fdq
   if ! apply_overlay; then emit "{\"repo\":\"$repo\",\"base_sha\":\"$base\",\"verified\":false,\"reject\":\"overlay\"}"; continue; fi
   rc_base="$(run_cmd)"
   base_out="$(cat "$CACHE/$base_sha.out")"
@@ -58,7 +58,7 @@ for i in $(seq 0 $((n - 1))); do
   grep -qE '\[build failed\]|undefined:|cannot use .* as|cannot find package|no required module|syntax error|not enough arguments|too many arguments' <<<"$base_out" && build_error=true
 
   git -C "$dir" fetch -q --depth 1 origin "$head" || { emit "{\"repo\":\"$repo\",\"base_sha\":\"$base\",\"verified\":false,\"reject\":\"head fetch\"}"; continue; }
-  git -C "$dir" checkout -q FETCH_HEAD 2>/dev/null || { emit "{\"repo\":\"$repo\",\"base_sha\":\"$base\",\"verified\":false,\"reject\":\"head checkout\"}"; continue; }
+  git -C "$dir" reset --hard -q FETCH_HEAD 2>/dev/null; git -C "$dir" clean -fdq
   rc_head="$(run_cmd)"
   head_passed=false; [ "$rc_head" = 0 ] && head_passed=true
 
@@ -71,8 +71,12 @@ for i in $(seq 0 $((n - 1))); do
   fi
 
   # Verified: back to base+overlay and run the production engine.
-  git -C "$dir" checkout -q "$base_sha" 2>/dev/null || true
+  git -C "$dir" reset --hard -q "$base_sha" 2>/dev/null; git -C "$dir" clean -fdq
   apply_overlay || true
+  # The engine reproduces in an isolated git worktree of HEAD, so the injected
+  # regression test must be committed to be visible there.
+  git -C "$dir" add -A >/dev/null 2>&1
+  git -C "$dir" -c user.email=holdout@local -c user.name=holdout commit -qm "holdout: injected regression test" >/dev/null 2>&1 || true
   "$CAESER" diagnose --repo "$dir" --command "$cmd" --attempts 1 --json > "$CACHE/$base_sha.report.json" 2>"$CACHE/$base_sha.err" || true
   primary="$(jq -r '.likely_function.primary.function // "ABSTAIN"' "$CACHE/$base_sha.report.json" 2>/dev/null)"
   trace="$(jq -r '.causal_trace.status // "-"' "$CACHE/$base_sha.report.json" 2>/dev/null)"
