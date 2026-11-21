@@ -23,7 +23,7 @@ permissions:
 jobs:
   evaluate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -39,11 +39,7 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      - name: Unit tests (mission packages, gating)
-        run: go test ./internal/diagnosis/... ./internal/evalcorpus/... ./cmd/...
-
-      - name: Full test suite (informational)
-        continue-on-error: true
+      - name: Unit tests
         run: go test ./...
 
       - name: Verify corpus fixtures
