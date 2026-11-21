@@ -88,6 +88,13 @@ The only CI test failure encountered was a **pre-existing environment-flaky**
 the workflow gates strictly on the mission packages and runs the full suite
 informationally.
 
+## Independent evaluation — first five verified cases (frozen)
+On `ceaser-org/ceaser` CI (and reproduced locally), five verified unfamiliar
+cases (kong #627/#651/#637, urfave/cli #2511, spf13/cobra #2356):
+**exact-function 1/5**, file-level 2/5, 1 abstention. Internal reproduction and CI
+agree. See `INDEPENDENT-RESULTS.md`. Failure categories: sibling/fan-out ranking
+and no-frame localization. The six-case 6/6 is **not** generalization accuracy.
+
 ## Runtime
 Within noise (1–5 s per case, `go/packages`-dominated); defect assessment is a
 bounded single-function AST walk plus an O(values) SSA scan.
