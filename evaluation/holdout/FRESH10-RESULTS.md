@@ -23,3 +23,11 @@ Exact-function: 3/10.
 
 Do not tune against this batch. Collect a further fresh batch for any
 later comparison.
+
+## CI reproduction
+
+Workflow `final-eval.yml` now runs this manifest. Run `45057346470` on
+`ceaser-org/ceaser` completed successfully and produced the same counts from the
+uploaded `final-mission-eval` artifact: 10 cases, 10 verified, 3 exact-function
+hits. The same run reported 3 of 5 on the exposed holdout and 6 of 6 on the
+paired development cases with no regressions.
