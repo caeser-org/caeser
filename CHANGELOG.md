@@ -2,6 +2,13 @@
 
 Caeser uses release notes under `docs/releases/`. This file summarizes them.
 
+## Unreleased
+
+- Added a frozen independent batch of ten verified cases from unseen
+  repositories. First evaluation, before any tuning: 3/10 exact-function with
+  three abstentions. The batch is a validation set and must not be used for
+  tuning. See `evaluation/holdout/FRESH10-RESULTS.md`.
+
 ## v0.1.1
 
 Ships the candidate-admission fix from commit `4a5c4d9`. No verification gate

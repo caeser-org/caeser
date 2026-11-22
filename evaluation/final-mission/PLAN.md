@@ -1,4 +1,4 @@
-# Ceaser final mission — PLAN
+# Ceaser final mission: PLAN
 
 Mission spec: `prompt.md` (repo root). North star: identify the most defensible
 **defect-origin operation/mechanism**, explain causation, differentiate
@@ -17,7 +17,7 @@ DONE / PARTIAL / BLOCKED / DEFERRED
 | C | Hypothesis generation/competition | PARTIAL | precise locations + evidence + falsifiable checks; competing hypotheses retained; no unsupported primary shifts |
 | D | Targeted runtime experiments/verification | PARTIAL (pre-existing) | existing probe/verifier preserved; no widening; no sound new verifier identified |
 | E | Coverage gaps | PARTIAL | E2 assertion anchors (material only) DONE; E1/E3/E4 DEFERRED pending evaluation signal |
-| F | Independent evaluation | NEXT | collect ten fresh verified cases; freeze before first evaluation |
+| F | Independent evaluation | DONE | ten fresh verified cases frozen and evaluated once: 3/10 exact-function |
 | G | Production hardening/docs | DONE (docs) / PARTIAL | `docs/capabilities.md`; comment wording; report wording verified |
 
 ## This implementation increment
@@ -27,13 +27,14 @@ DONE / PARTIAL / BLOCKED / DEFERRED
 - Phase B: each defect origin is classified against `report.Deltas`
   (`changed` / `changed_file` / `unchanged`), never used to promote.
 
-## Next batch protocol
+## Batch protocol
 
-Ten fresh cases from repositories the engine has not seen. For each case, verify
-base fails as a test failure and head passes, pin the reviewed culprit function,
-record source SHAs, then freeze the manifest. Run the first evaluation once,
-unchanged. Do not inspect these cases to design or tune a fix before that first
-evaluation. The five earlier cases are development-exposed and are not reused as
+For each fresh batch, use repositories the engine has not seen. Verify base fails
+as a test failure and head passes, pin the reviewed culprit function, record
+source SHAs, then freeze the manifest. Run the first evaluation once, unchanged.
+Do not inspect cases to design or tune a fix before that first evaluation, and
+do not tune against a batch used to report accuracy. The ten-case batch is frozen
+at 3/10. The five earlier cases are development-exposed and are not reused as
 independent evidence.
 
 ## Constraints honored

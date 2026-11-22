@@ -11,11 +11,11 @@ gates are satisfied.
 
 > **Read this before relying on it.** Caeser is an investigation aid, not
 > a root-cause oracle. On six development-exposed cases it named the correct
-> function 6/6 times. The first five independently curated regressions from
-> unfamiliar repositories originally scored 1/5 exact-function; those five are
-> now development-exposed after being used to fix a candidate admission gap,
-> and currently score 3/5. There is **no fresh independent measurement**.
-> Details are in [the evaluation status](evaluation/final-mission/INDEPENDENT-RESULTS.md).
+> function 6/6 times. The first five curated regressions originally scored 1/5;
+> those five are now development-exposed and score 3/5 after tuning. A later
+> frozen batch of ten genuinely independent cases scored **3/10 (30%) exact
+> function** on its first evaluation. Details are in
+> [the evaluation status](evaluation/final-mission/INDEPENDENT-RESULTS.md).
 > Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
 > auto-merge, auto-revert, or assign blame.
 
@@ -242,13 +242,16 @@ What the engine computes today:
 - **Six paired development cases** (used while building the engine): 6/6
   exact-function with tracing enabled vs 5/6 disabled, no regressions. This is
   *function localization*, not verified diagnosis.
-- **First five verified regressions from unfamiliar repositories**: originally
-  1/5 exact-function. These are now development-exposed; after admitting
-  chain-named and assertion-mentioned functions they score 3/5. This is not an
-  independent rate. See
-  [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md).
+- **First five verified regressions**: originally 1/5 exact-function. These are
+  now development-exposed and score 3/5 after tuning, so they are not an
+  independent rate.
+- **Fresh independent batch**: ten verified cases from unseen repositories,
+  frozen before their first evaluation, scored **3/10 (30%) exact-function**
+  with three abstentions. See
+  [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md) and
+  [FRESH10-RESULTS.md](evaluation/holdout/FRESH10-RESULTS.md).
 
-There is **no fresh independent measurement** and no claim that Caeser
+This 3/10 is the honest independent signal. There is no claim that Caeser
 identifies a defect-introducing change reliably on unfamiliar code. Runtime
 probes and verified-mechanism checks remain narrow and experimental. See
 [capabilities and limitations](docs/capabilities.md) and the

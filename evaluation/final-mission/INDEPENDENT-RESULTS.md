@@ -1,9 +1,20 @@
-# Evaluation status: first five verified cases (now development-exposed)
+# Evaluation status: independent batch and exposed early cases
 
-Run on GitHub Actions (`ceaser-org/ceaser`, branch `eval/final-mission-2026-11-22`),
-reproduced locally and in CI. Cases were verified before scoring: base fails the
-injected regression test as a test failure (not a build error) and the fixed head
-passes.
+## Current independent measurement
+
+A fresh batch of ten verified cases from repositories Ceaser had not been tuned
+against was frozen before its first evaluation. Exact-function: **3/10 (30%)**,
+with three abstentions. This is the honest independent signal for the engine as
+shipped in v0.1.1. The cases remain frozen and must not be used for tuning. Full
+table: [FRESH10-RESULTS.md](../holdout/FRESH10-RESULTS.md). Manifest:
+[fresh10-manifest.json](../holdout/fresh10-manifest.json).
+
+## Early case history
+
+The first five cases below were run on GitHub Actions
+(`ceaser-org/ceaser`, branch `eval/final-mission-2026-11-22`), reproduced locally
+and in CI. Cases were verified before scoring: base fails the injected regression
+test as a test failure (not a build error) and the fixed head passes.
 
 ## Exposure notice
 
@@ -84,5 +95,6 @@ holdout). Manifest and reviewed labels: `evaluation/holdout/manifest.json`.
 
 ## Next required step
 
-Collect ten fresh verified cases from unfamiliar repositories, freeze them, and
-score only on those. Do not tune on the same cases used to report accuracy.
+The ten-case fresh batch is collected, frozen, and evaluated once at 3/10. Keep
+it as a validation set and do not tune against it. For any later engine change,
+collect a further fresh batch and evaluate once without tuning.
