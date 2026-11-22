@@ -118,6 +118,12 @@ func BuildCandidateReport(report Report) CandidateReport {
 	candidatesByEvidence := append([]domain.CandidateLocation(nil), report.Candidates...)
 	evidenceRank := func(candidate domain.CandidateLocation) int {
 		provenance := candidate.Location.Provenance
+		if provenance == "assertion_mention" {
+			return 1
+		}
+		if provenance == "causal_dependency" {
+			return 1
+		}
 		if provenance == "causal_producer" {
 			if report.CausalTrace != nil && report.CausalTrace.Supersedes && report.CausalTrace.Producer != nil &&
 				candidate.Location.SymbolIdentity == report.CausalTrace.Producer.Identity {
@@ -138,6 +144,22 @@ func BuildCandidateReport(report Report) CandidateReport {
 		a, b := candidatesByEvidence[i], candidatesByEvidence[j]
 		if ra, rb := evidenceRank(a), evidenceRank(b); ra != rb {
 			return ra < rb
+		}
+		// A function named at the failing assertion is the most specific
+		// source-grounded lead once observed frames are accounted for.
+		aMention := a.Location.Provenance == "assertion_mention"
+		bMention := b.Location.Provenance == "assertion_mention"
+		if aMention != bMention {
+			return aMention
+		}
+		// Among assertion-dependency leads, prefer the step closest to the
+		// value's origin. The chain orders these steps from the assertion
+		// outward; the score captures that depth. Deeper means a stronger
+		// lead, never a verified cause.
+		if a.Location.Provenance == "causal_dependency" && b.Location.Provenance == "causal_dependency" {
+			if a.Score.DependencyRelevance != b.Score.DependencyRelevance {
+				return a.Score.DependencyRelevance > b.Score.DependencyRelevance
+			}
 		}
 		// Within observed execution evidence, prefer the innermost reported
 		// frame. The failure happened at the deepest frame, so the function that
@@ -205,6 +227,10 @@ func isTestFilePath(file string) bool {
 func inferredCandidateKind(provenance, locationType string) (kind, reason string) {
 	p := strings.ToLower(provenance + " " + locationType)
 	switch {
+	case strings.Contains(p, "assertion_mention"):
+		return "assertion_mention", "function named by the failing test's source at the assertion"
+	case strings.Contains(p, "causal_dependency"):
+		return "causal_dependency", "function on the failed assertion's dependency path (source-verified)"
 	case strings.Contains(p, "causal_producer"):
 		return "causal_producer", "value producer on the failure's causal path; the observed failure propagates its result or error"
 	case strings.Contains(p, "stack"), strings.Contains(p, "observed_frame"), strings.Contains(p, "enclosing_symbol"), strings.Contains(p, "frame"):

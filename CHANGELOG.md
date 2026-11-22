@@ -2,12 +2,26 @@
 
 Caeser uses release notes under `docs/releases/`. This file summarizes them.
 
+## Unreleased
+
+- Admit functions named by causal-chain `assertion_dependency` and
+  `implementation_branch` steps as `causal_dependency` leads, ranked by depth
+  toward the value's origin. Recovers function localization when the culprit is
+  named in the chain but was dropped at admission.
+- Admit a function named at the failing assertion in retrieved test source as an
+  `assertion_mention` lead, limited to comments with explicit causal language.
+- Stop re-injecting a candidate from SSA once the candidate tier already contains
+  it, so operand distance cannot override the evidence-grounded order.
+- The five verified holdout cases are now development-exposed. No fresh
+  independent accuracy measurement is claimed.
+
 ## v0.1.0, open source
 
 First public release. Go only. Produces evidence-grounded investigation leads,
 not verified root causes. Honest measured results: 6/6 exact-function on six
-development-exposed cases, **1/5** on the first five independently verified
-unfamiliar repositories. No verification gates were weakened.
+development-exposed cases, originally 1/5 on five verified unfamiliar
+repositories, now 3/5 after an admission fix made those five development-exposed.
+No verification gates were weakened.
 
 - Backward causal trace with operand provenance, caller arguments, observed-frame
   caller selection, and bounded multi-hop wrappers.

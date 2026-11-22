@@ -10,11 +10,12 @@ does not claim a verified root cause unless the existing stringent verification
 gates are satisfied.
 
 > **Read this before relying on it.** Caeser is an investigation aid, not
-> a root-cause oracle. On a frozen set of six development-exposed Go cases it
-> named the correct function 6/6 times; on the **first five independently
-> curated, verified real-world regressions from unfamiliar repositories it got
-> 1/5 (20%) exact-function**, with one abstention. These numbers are reported in
-> full in [the independent results](evaluation/final-mission/INDEPENDENT-RESULTS.md).
+> a root-cause oracle. On six development-exposed cases it named the correct
+> function 6/6 times. The first five independently curated regressions from
+> unfamiliar repositories originally scored 1/5 exact-function; those five are
+> now development-exposed after being used to fix a candidate admission gap,
+> and currently score 3/5. There is **no fresh independent measurement**.
+> Details are in [the evaluation status](evaluation/final-mission/INDEPENDENT-RESULTS.md).
 > Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
 > auto-merge, auto-revert, or assign blame.
 
@@ -238,16 +239,18 @@ What the engine computes today:
 
 **Measured, not assumed:**
 
-- **Six development-exposed cases** (used while building the engine): 6/6
-  exact-function with tracing enabled vs 5/6 disabled, with no primary
-  regressions. This is *function localization*, not verified diagnosis.
-- **First five independent, verified real-world regressions** from unfamiliar
-  repositories: **1/5 (20%) exact-function**, one abstention. See
+- **Six paired development cases** (used while building the engine): 6/6
+  exact-function with tracing enabled vs 5/6 disabled, no regressions. This is
+  *function localization*, not verified diagnosis.
+- **First five verified regressions from unfamiliar repositories**: originally
+  1/5 exact-function. These are now development-exposed; after admitting
+  chain-named and assertion-mentioned functions they score 3/5. This is not an
+  independent rate. See
   [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md).
 
-There is **no general accuracy claim** and no claim that Caeser identifies a
-defect-introducing change reliably on unfamiliar code. Runtime probes and
-verified-mechanism checks remain narrow and experimental. See
+There is **no fresh independent measurement** and no claim that Caeser
+identifies a defect-introducing change reliably on unfamiliar code. Runtime
+probes and verified-mechanism checks remain narrow and experimental. See
 [capabilities and limitations](docs/capabilities.md) and the
 [v0.1.0 notes](docs/releases/v0.1.0.md).
 
