@@ -17,7 +17,7 @@ workflow or package script.
 
 Caeser diagnoses a failed CI run in **your** repository. Your repository keeps
 its source, its CI workflow, and a small `.caeser.yml`. Caeser supplies the
-diagnosis engine through a reusable workflow. v0.1.0-alpha downloads a checksum-verified
+diagnosis engine through a reusable workflow. v0.1.0 downloads a checksum-verified
 prebuilt binary; it does not compile Caeser on each run.
 
 ## 1. Add `.caeser.yml`
@@ -77,7 +77,7 @@ jobs:
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.0-alpha
+    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.0
     with:
       run_id: ${{ github.event.workflow_run.id }}
       head_sha: ${{ github.event.workflow_run.head_sha }}
@@ -112,7 +112,7 @@ installation and publication defaults are defined by the reusable workflow.
 | `attempts` | from `.caeser.yml` | Reproduction attempts |
 | `docker_image` | from `.caeser.yml` | Docker executor image |
 | `agent` | `false` | Model-backed analysis of collected evidence |
-| `caeser_version` | `v0.1.0-alpha` | Download a checksum-verified release; `latest` follows releases and `main` explicitly builds development source |
+| `caeser_version` | `v0.1.0` | Download a checksum-verified release; `latest` follows releases and `main` explicitly builds development source |
 | `comment_detail` | `short` | Collapse diagnosis details, or use `detailed` to show them by default |
 | `agent_code_retrieval` | `false` | Allow optional model analysis to request bounded Go source excerpts from the failing commit |
 | `caeser_repository` | `caeser-org/ceaser` | Repository providing release assets |
@@ -163,7 +163,7 @@ Pass both to the reusable workflow:
       CAESER_APP_PRIVATE_KEY: ${{ secrets.CAESER_APP_PRIVATE_KEY }}
 ```
 
-Use the v0.1.0-alpha reusable workflow, which includes this input. The binary remains
+Use the v0.1.0 reusable workflow, which includes this input. The binary remains
 prebuilt; App authentication changes publication, not diagnosis.
 Keep the existing same-repository guard and permissions in your caller.
 
@@ -186,7 +186,7 @@ those users' workflows.
 
 ## Requirements and limits
 
-- The default install downloads the v0.1.0-alpha Linux amd64 binary and verifies its
+- The default install downloads the v0.1.0 Linux amd64 binary and verifies its
   checksum. `caeser_version: main` opts into a source build.
 - The CLI is prebuilt; reproducing the target project can still require its own
   dependencies and compilation. GitHub runners are the default. Blacksmith is

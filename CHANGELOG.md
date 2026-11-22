@@ -2,9 +2,9 @@
 
 Caeser uses release notes under `docs/releases/`. This file summarizes them.
 
-## v0.1.0-alpha — open-source developer preview
+## v0.1.0, open source
 
-First public alpha. Go-only. Produces evidence-grounded investigation leads,
+First public release. Go only. Produces evidence-grounded investigation leads,
 not verified root causes. Honest measured results: 6/6 exact-function on six
 development-exposed cases, **1/5** on the first five independently verified
 unfamiliar repositories. No verification gates were weakened.
@@ -18,10 +18,10 @@ unfamiliar repositories. No verification gates were weakened.
 - Reproducible verified-overlay independent holdout pipeline on GitHub Actions.
 - Properly fixed the flaky process-group test; full suite is the CI gate.
 
-See [v0.1.0-alpha notes](docs/releases/v0.1.0-alpha.md) and
+See [v0.1.0 notes](docs/releases/v0.1.0.md) and
 [capabilities](docs/capabilities.md).
 
-## Unreleased — v9.2 (proposed, historical)
+## Unreleased, v9.2 (proposed, historical)
 
 Diagnostics-quality release. No change to verification or promotion.
 
@@ -42,14 +42,14 @@ Diagnostics-quality release. No change to verification or promotion.
 
 See [docs/releases/v9.2.md](docs/releases/v9.2.md).
 
-## v9.1 — localization crash fix
+## v9.1, localization crash fix
 
 - Fixes a crash when a stack frame matched only a whole-file node.
 - Install defaults pinned to v9.1.
 
 See [docs/releases/v9.1.md](docs/releases/v9.1.md).
 
-## v9 — likely-function handoff tier
+## v9, likely-function handoff tier
 
 - Adds the structured `likely_function` tier (primary suspect plus alternates,
   each with file, function, line, reason, provenance kind, confidence and

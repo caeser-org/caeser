@@ -7,10 +7,10 @@ evidence semantics it uses. It is deliberately conservative.
 
 | Output | Evidence basis | Does it mean the cause? |
 |---|---|---|
-| Classification (regression / pre-existing / flaky / …) | reproduction + base/head | no — behavioral character |
-| Likely function (primary + alternates) | observed frames, verified call paths, SSA operands | no — investigation lead |
-| Causal trace (`CausalTrace`) | observed frames + typed calls + argument provenance | no — relationship evidence (`inferred`/`static`) |
-| Defect-origin hypothesis (`DefectOrigin`) | AST pattern (+ SSA type/path when available) | no — hypothesis, `source_pattern` or `static_data_dependency` |
+| Classification (regression / pre-existing / flaky / …) | reproduction + base/head | no, behavioral character |
+| Likely function (primary + alternates) | observed frames, verified call paths, SSA operands | no, investigation lead |
+| Causal trace (`CausalTrace`) | observed frames + typed calls + argument provenance | no, relationship evidence (`inferred`/`static`) |
+| Defect-origin hypothesis (`DefectOrigin`) | AST pattern (+ SSA type/path when available) | no, hypothesis, `source_pattern` or `static_data_dependency` |
 | Root-cause assessment (`RootCauseAssessment`) | concurrency contract or runtime mechanism gates | `established` only when the gates pass |
 | Verified mechanism | runtime probe + correlation + SSA + recognized mechanism | yes (narrow) |
 

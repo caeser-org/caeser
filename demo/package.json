@@ -1,0 +1,17 @@
+{
+  "name": "ceaser-demo-recorder",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Deterministic Playwright + FFmpeg product-demo recorder for the Ceaser landing page.",
+  "scripts": {
+    "record": "bash record.sh",
+    "capture": "node capture.mjs",
+    "assemble": "node scripts/assemble.mjs",
+    "inspect": "node scripts/inspect.mjs",
+    "login": "node scripts/login.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}

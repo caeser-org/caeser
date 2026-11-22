@@ -1,6 +1,6 @@
 # Caeser
 
-### Open-source Go CI failure investigator — developer preview (v0.1.0-alpha)
+### Open-source Go CI failure investigator (v0.1.0)
 
 Caeser reads a failed CI run, traces the failure through the checked-out source,
 and updates one comment on the pull request with the failure, the evidence, and
@@ -9,7 +9,7 @@ the most defensible functions to inspect. It separates what the failure
 does not claim a verified root cause unless the existing stringent verification
 gates are satisfied.
 
-> **Alpha — read this before relying on it.** Caeser is an investigation aid, not
+> **Read this before relying on it.** Caeser is an investigation aid, not
 > a root-cause oracle. On a frozen set of six development-exposed Go cases it
 > named the correct function 6/6 times; on the **first five independently
 > curated, verified real-world regressions from unfamiliar repositories it got
@@ -58,7 +58,7 @@ Measured localization and verification results are listed under
 
 ## Try it locally
 
-Linux x86_64 users can [install the v0.1.0-alpha binary](docs/installation.md#install-a-released-binary).
+Linux x86_64 users can [install the v0.1.0 binary](docs/installation.md#install-a-released-binary).
 To build locally, you need Go 1.26, Git, and a C compiler for SQLite. Docker is
 needed only when you choose the Docker executor:
 
@@ -123,7 +123,7 @@ jobs:
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.0-alpha
+    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.0
     with:
       run_id: ${{ github.event.workflow_run.id }}
       head_sha: ${{ github.event.workflow_run.head_sha }}
@@ -132,7 +132,7 @@ jobs:
 
 </details>
 
-**v0.1.0-alpha uses a prebuilt, checksum-verified binary.** Caeser is built once per release,
+**v0.1.0 uses a prebuilt, checksum-verified binary.** Caeser is built once per release,
 not once per diagnosis. Target tests may still need their own compilation.
 GitHub-hosted runners are supported; Blacksmith is not required.
 
@@ -141,14 +141,14 @@ Caeser updates its existing comment on later failures. It puts the report and
 supporting logs in a workflow artifact. Use `comment_detail: detailed` to show
 the evidence section by default, or `comment: false` to publish only the workflow
 summary and artifact. For reproducible installs, pin the reusable workflow
-reference to a full commit SHA. The binary defaults to `caeser_version: v0.1.0-alpha`;
+reference to a full commit SHA. The binary defaults to `caeser_version: v0.1.0`;
 `main` opts into development source builds. See [integration options](docs/ci-integration.md).
 
 For a custom job, use the setup action:
 
 ```yaml
 steps:
-  - uses: caeser-org/ceaser@v0.1.0-alpha
+  - uses: caeser-org/ceaser@v0.1.0
   - run: caeser version
 ```
 
@@ -217,9 +217,9 @@ On the [Caeser smoke PR](https://github.com/caeser-org/ceaser/pull/25#issuecomme
 the test expected `"ready"` and got `"pending"`. The assertion line was the
 useful location. There was no application call to investigate.
 
-## Status — developer preview (v0.1.0-alpha)
+## Status (v0.1.0)
 
-Caeser is a **Go-only developer preview**. It produces investigation leads, not
+Caeser is a **Go-only release**. It produces investigation leads, not
 verified root causes. It keeps four things separate: the observed failure, the
 observed execution location, inferred causal hypotheses, and a verified
 mechanism (which requires the existing stringent runtime gates).
@@ -249,7 +249,7 @@ There is **no general accuracy claim** and no claim that Caeser identifies a
 defect-introducing change reliably on unfamiliar code. Runtime probes and
 verified-mechanism checks remain narrow and experimental. See
 [capabilities and limitations](docs/capabilities.md) and the
-[v0.1.0-alpha notes](docs/releases/v0.1.0-alpha.md).
+[v0.1.0 notes](docs/releases/v0.1.0.md).
 
 ## Architecture
 
@@ -434,7 +434,7 @@ Neither service is required for the default PR-report integration. See the
 
 | Adapter | Availability |
 | --- | --- |
-| **Go** | Available in this alpha. Go test output, assertion and panic locations, source relationships, and race evidence. |
+| **Go** | Available in v0.1.0. Go test output, assertion and panic locations, source relationships, and race evidence. |
 | JavaScript / TypeScript | Planned. Existing environment detection and report parsing need runner-specific validation. |
 | Python | Planned. Existing traceback parsing and environment detection provide a starting point. |
 | Java / Kotlin | Planned. Existing JUnit and exception parsing provide a starting point. |
