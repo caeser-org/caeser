@@ -2,18 +2,20 @@
 
 Caeser uses release notes under `docs/releases/`. This file summarizes them.
 
-## Unreleased
+## v0.1.1
+
+Ships the candidate-admission fix from commit `4a5c4d9`. No verification gate
+changed. Exact-function matches: 6 of 6 on the paired development cases, 3 of 5
+on the five now-exposed cases after tuning. There is no fresh independent
+measurement and no claim of production-ready root-cause diagnosis.
 
 - Admit functions named by causal-chain `assertion_dependency` and
-  `implementation_branch` steps as `causal_dependency` leads, ranked by depth
-  toward the value's origin. Recovers function localization when the culprit is
-  named in the chain but was dropped at admission.
-- Admit a function named at the failing assertion in retrieved test source as an
-  `assertion_mention` lead, limited to comments with explicit causal language.
-- Stop re-injecting a candidate from SSA once the candidate tier already contains
-  it, so operand distance cannot override the evidence-grounded order.
-- The five verified holdout cases are now development-exposed. No fresh
-  independent accuracy measurement is claimed.
+  `implementation_branch` steps as `causal_dependency` leads, ranked by depth.
+- Admit functions named at the failing assertion in retrieved test source as
+  `assertion_mention` leads, limited to comments with explicit causal language.
+- Stop re-injecting a candidate from SSA once the candidate tier contains it.
+
+See [v0.1.1 notes](docs/releases/v0.1.1.md).
 
 ## v0.1.0, open source
 

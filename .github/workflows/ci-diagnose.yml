@@ -9,7 +9,7 @@ name: Caeser Diagnose
 #         actions: read
 #         contents: read
 #         pull-requests: write
-#       uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.0
+#       uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.1
 #       with:
 #         run_id: ${{ github.event.workflow_run.id }}
 #         head_sha: ${{ github.event.workflow_run.head_sha }}
@@ -80,7 +80,7 @@ on:
         description: Prebuilt release tag or latest; use main only for development source builds
         type: string
         required: false
-        default: v0.1.0
+        default: v0.1.1
       caeser_repository:
         description: Repository that publishes Caeser releases
         type: string
