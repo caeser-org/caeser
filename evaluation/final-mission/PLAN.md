@@ -17,7 +17,7 @@ DONE / PARTIAL / BLOCKED / DEFERRED
 | C | Hypothesis generation/competition | PARTIAL | precise locations + evidence + falsifiable checks; competing hypotheses retained; no unsupported primary shifts |
 | D | Targeted runtime experiments/verification | PARTIAL (pre-existing) | existing probe/verifier preserved; no widening; no sound new verifier identified |
 | E | Coverage gaps | PARTIAL | E2 assertion anchors (material only) DONE; E1/E3/E4 DEFERRED pending evaluation signal |
-| F | Independent evaluation | BLOCKED | disk (1.7Gi free) prevents new-repo corpus; workflow prepared |
+| F | Independent evaluation | NEXT | collect ten fresh verified cases; freeze before first evaluation |
 | G | Production hardening/docs | DONE (docs) / PARTIAL | `docs/capabilities.md`; comment wording; report wording verified |
 
 ## This implementation increment
@@ -26,6 +26,15 @@ DONE / PARTIAL / BLOCKED / DEFERRED
   type-unknown keeps an inferred hypothesis with a limitation.
 - Phase B: each defect origin is classified against `report.Deltas`
   (`changed` / `changed_file` / `unchanged`), never used to promote.
+
+## Next batch protocol
+
+Ten fresh cases from repositories the engine has not seen. For each case, verify
+base fails as a test failure and head passes, pin the reviewed culprit function,
+record source SHAs, then freeze the manifest. Run the first evaluation once,
+unchanged. Do not inspect these cases to design or tune a fix before that first
+evaluation. The five earlier cases are development-exposed and are not reused as
+independent evidence.
 
 ## Constraints honored
 No parallel engine; reuse `fnOrigins`/`causal_trace`/SSA trace/`CodeDelta`; no
