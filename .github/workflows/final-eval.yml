@@ -70,6 +70,16 @@ jobs:
             echo "no independent holdout cases configured" 
           fi
 
+      - name: Fresh independent batch evaluation
+        env:
+          CAESER: ${{ runner.temp }}/caeser
+          CACHE: ${{ runner.temp }}/fresh10
+          OUT: ${{ runner.temp }}/fresh10-results.json
+          MANIFEST: ${{ github.workspace }}/evaluation/holdout/fresh10-manifest.json
+        run: |
+          set -uo pipefail
+          bash evaluation/scripts/holdout-run.sh || true
+
       - name: Summarize
         if: always()
         run: |
@@ -88,9 +98,13 @@ jobs:
               echo "no results produced"
             fi
             echo
-            echo "### Independent holdout"
+            echo "### Exposed holdout (five cases)"
             jq '{cases:length, hit:([.[]|select(.hit)]|length)}' \
               "$RUNNER_TEMP/holdout-results.json" 2>/dev/null || echo "none configured"
+            echo
+            echo "### Fresh independent batch (ten cases)"
+            jq '{cases:length, verified:([.[]|select(.verified)]|length), hit:([.[]|select(.hit)]|length)}' \
+              "$RUNNER_TEMP/fresh10-results.json" 2>/dev/null || echo "none configured"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload results
@@ -101,6 +115,8 @@ jobs:
           path: |
             ${{ runner.temp }}/paired.json
             ${{ runner.temp }}/holdout-results.json
+            ${{ runner.temp }}/fresh10-results.json
             ${{ runner.temp }}/causal-eval
             ${{ runner.temp }}/holdout
+            ${{ runner.temp }}/fresh10
           if-no-files-found: warn
