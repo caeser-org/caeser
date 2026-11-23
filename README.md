@@ -247,7 +247,7 @@ What the engine computes today:
   independent rate.
 - **Fresh independent batch**: ten verified cases from unseen repositories,
   frozen before their first evaluation, scored **3/10 (30%) exact-function**
-  with three abstentions. See
+  with one abstention. See
   [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md) and
   [FRESH10-RESULTS.md](evaluation/holdout/FRESH10-RESULTS.md).
 
@@ -484,6 +484,7 @@ go build ./...
 
 | Reference | Contents |
 | --- | --- |
+| [Documentation hub](docs/README.md) | Website-ready docs index: start-here paths, core concepts, pipeline, commands, configuration, outputs and safety |
 | [Installation](docs/installation.md) | Source builds, released binaries, and common setup failures |
 | [CI integration](docs/ci-integration.md) | Workflow inputs, permissions, and execution options |
 | [GitHub Action](docs/github-action.md) | Setup action, custom jobs, release installation and Marketplace |

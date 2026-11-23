@@ -7,7 +7,7 @@ Caeser uses release notes under `docs/releases/`. This file summarizes them.
 CI and documentation release. The diagnosis engine is unchanged from v0.1.1.
 The evaluation workflow now runs the frozen ten-case fresh batch and reports its
 verified and exact-function counts. Current honest independent signal: 3 of 10
-with three abstentions. No claim of production-ready root-cause diagnosis.
+with one abstention. No claim of production-ready root-cause diagnosis.
 
 See [v0.1.2 notes](docs/releases/v0.1.2.md).
 
@@ -15,7 +15,7 @@ See [v0.1.2 notes](docs/releases/v0.1.2.md).
 
 - Added a frozen independent batch of ten verified cases from unseen
   repositories. First evaluation, before any tuning: 3/10 exact-function with
-  three abstentions. The batch is a validation set and must not be used for
+  one abstention. The batch is a validation set and must not be used for
   tuning. See `evaluation/holdout/FRESH10-RESULTS.md`.
 
 ## v0.1.1

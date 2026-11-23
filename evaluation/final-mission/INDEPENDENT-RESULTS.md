@@ -4,7 +4,7 @@
 
 A fresh batch of ten verified cases from repositories Ceaser had not been tuned
 against was frozen before its first evaluation. Exact-function: **3/10 (30%)**,
-with three abstentions. This is the honest independent signal for the engine as
+with one abstention. This is the honest independent signal for the engine as
 shipped in v0.1.1. The cases remain frozen and must not be used for tuning. Full
 table: [FRESH10-RESULTS.md](../holdout/FRESH10-RESULTS.md). Manifest:
 [fresh10-manifest.json](../holdout/fresh10-manifest.json).
