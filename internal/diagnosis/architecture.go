@@ -294,9 +294,32 @@ func buildFailureIncidents(report *Report) []FailureIncident {
 		for _, episode := range report.FailureEpisodes {
 			tests = appendUniqueString(tests, episode.TestIdentifier)
 		}
-		incidents = append(incidents, FailureIncident{ID: "incident:observed-failures", Category: string(report.Classification), AffectedTests: tests, ObservedExplanation: "CI evidence records failed tests, but no structured race or compiler diagnostic was available to establish a more specific incident.", ProposedExplanation: "No evidence-backed mechanism established.", PRRelationship: "No demonstrated PR relationship; base-versus-head verification is unavailable.", ObservedConfidence: 1, ExplanationConfidence: 0, CausalityConfidence: 0, Uncertainty: []string{"Only the recorded failure observation is established."}})
+		incidents = append(incidents, FailureIncident{ID: "incident:observed-failures", Category: string(report.Classification), AffectedTests: tests, ObservedExplanation: "CI evidence confirms the test failure. The available evidence does not establish which source operation caused it or which invariant was violated.", ProposedExplanation: "Source analysis identified candidate locations, but did not establish the operation that caused the failure.", PRRelationship: observedFailurePRRelationship(*report), ObservedConfidence: 1, ExplanationConfidence: 0, CausalityConfidence: 0, Uncertainty: []string{"The failure is observed; its source-level cause and relationship to the PR remain unverified."}})
 	}
 	return incidents
+}
+
+func observedFailurePRRelationship(report Report) string {
+	verdict := ClassInconclusive
+	if report.GoColdPath != nil {
+		verdict = report.GoColdPath.Verdict
+	} else if report.Comparison != nil {
+		verdict = report.Comparison.Verdict
+	} else {
+		return "PR attribution is unknown because this run did not compare the failure on the PR head and base revisions."
+	}
+	switch verdict {
+	case ClassRealRegression:
+		return "The focused comparison failed on the PR head and passed on the base, supporting attribution to the PR."
+	case ClassPreExisting:
+		return "The failure also reproduced on the base revision, so it is not specific to this PR."
+	case ClassFlaky:
+		return "Base/head attempts had mixed results; PR attribution remains inconclusive."
+	case ClassNotReproduced:
+		return "The focused check did not reproduce the observed failure; PR attribution remains unresolved."
+	default:
+		return "A base/head comparison was attempted but did not establish whether the PR introduced the failure."
+	}
 }
 
 func hasWaitGroupRaceSignature(race RaceReport) bool {

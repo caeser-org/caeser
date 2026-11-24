@@ -516,6 +516,20 @@ jobs:
             else
               echo "**Reproduced:** $(jq -r '(.baseline.failures // 0|tostring) + "/" + (.baseline.attempts // 0|tostring)' "$report") attempts failed"
             fi
+            if [ "${{ inputs.agent }}" = "true" ]; then
+              agent_status="$(jq -r '.agent_status // "unknown"' "$report")"
+              if [ "$agent_status" = "completed" ]; then
+                echo "**Gemini analysis:** completed ($(jq -r '.agent.model // "configured model"' "$report"))"
+                agent_hypotheses="$(jq -r '.agent.hypotheses[]? | "- " + .statement + " (confidence " + ((.confidence // 0)|tostring) + "; evidence: " + ((.supporting_evidence_ids // [])|join(", ")) + ")"' "$report")"
+                if [ -n "$agent_hypotheses" ]; then
+                  echo
+                  echo '**Gemini hypotheses (unverified):**'
+                  echo "$agent_hypotheses"
+                fi
+              else
+                echo "**Gemini analysis:** unavailable ($agent_status). See the JSON report artifact for the provider error."
+              fi
+            fi
             if jq -e '.go_cold_path != null' "$report" >/dev/null; then
               echo "**Focused Go verification:** $(jq -r '(.go_cold_path.status // "unknown") + "; verdict=" + (.go_cold_path.verdict // "inconclusive") + "; head matches=" + ((.go_cold_path.head.matched // 0)|tostring) + (if .go_cold_path.base then "; base matches=" + ((.go_cold_path.base.matched // 0)|tostring) else "" end)' "$report")"
             fi
@@ -528,11 +542,10 @@ jobs:
               | ($incident.affected_tests // []) as $tests
               | "### " + ($incident.category // "Observed incident")
                 + "\n\n**Affected tests:** " + (if ($tests|length) > 3 then (($tests[0:3]|join(", ")) + " and " + ((($tests|length)-3)|tostring) + " more") else ($tests|join(", ")) end)
-                + "\n\n**Observed locations:** "
-                + (($incident.observed_locations // []) | map((.access // "access") + ": `" + (.file // "unknown") + ":" + ((.line // 0)|tostring) + "`" + (if .function then " (" + .function + ")" else "" end)) | join("; "))
-                + "\n\n" + ($finding.statement // $incident.observed_explanation // "Observed incident evidence preserved.")
-                + "\n\n**Relevant code:** " + ($incident.proposed_explanation // "No mechanism established.")
-                + "\n\n**PR relationship:** " + ($incident.pr_relationship // "Not established.")
+                + (if (($incident.observed_locations // []) | length) > 0 then "\n\n**Observed locations:** " + (($incident.observed_locations // []) | map((.access // "access") + ": `" + (.file // "unknown") + ":" + ((.line // 0)|tostring) + "`" + (if .function then " (" + .function + ")" else "" end)) | join("; ")) else "" end)
+                + "\n\n**Evidence summary:** " + ($finding.statement // $incident.observed_explanation // "Observed incident evidence preserved.")
+                + "\n\n**Mechanism assessment:** " + ($incident.proposed_explanation // "The source-level cause is not established.")
+                + "\n\n**PR attribution:** " + ($incident.pr_relationship // "PR attribution is unknown because this run did not compare the failure on the PR head and base revisions.")
                 + "\n\n**Evidence IDs:** " + (($finding.evidence_ids // $incident.evidence_ids // []) | join(", "))
                 + "\n\n**Root cause assessment:** " + (($report.root_cause.status // "unknown") + ": " + ($report.root_cause.statement // "not established") + "; causality=" + ($report.root_cause.causality_status // "unverified") + "; verification=" + ($report.root_cause.verification_status // "not_attempted"))
                 + (if (($report.root_cause.next_actions // [])|length) > 0 then "\n\n**Next verification:** " + (($report.root_cause.next_actions // [])|join("; ")) else "" end)

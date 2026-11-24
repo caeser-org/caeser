@@ -3,6 +3,8 @@ package diagnosis
 import (
 	"strings"
 	"testing"
+
+	"github.com/caeser-org/ceaser/internal/agent"
 )
 
 func TestInvestigationBriefPreservesEvidenceAndDeferredStatus(t *testing.T) {
@@ -26,6 +28,28 @@ func TestInvestigationBriefPreservesEvidenceAndDeferredStatus(t *testing.T) {
 	}
 	if strings.Contains(got, "1 of 1 attempts failed") || strings.Contains(got, "setup\n") {
 		t.Errorf("brief invented a reproduction or included irrelevant setup")
+	}
+}
+
+func TestInvestigationBriefShowsModelHypothesesAsUnverified(t *testing.T) {
+	report := Report{
+		AgentStatus: "completed",
+		Agent: &agent.Report{
+			Provider: "gemini",
+			Model:    "gemini-3.8-flash",
+			Hypotheses: []agent.Hypothesis{{
+				Statement:   "The route tree may index beyond its child slice.",
+				Component:   "router",
+				EvidenceIDs: []string{"E-panic"},
+				Confidence:  0.62,
+			}},
+		},
+	}
+	got := InvestigationBrief(report, false)
+	for _, needle := range []string{"## Model analysis", "gemini/gemini-3.8-flash", "model-generated leads, not verified findings", "The route tree may index beyond its child slice", "E-panic"} {
+		if !strings.Contains(got, needle) {
+			t.Errorf("brief missing model analysis detail %q", needle)
+		}
 	}
 }
 
