@@ -20,7 +20,7 @@ tools needed by the target repository.
 
 ## Install a released binary
 
-v0.1.2 provides `caeser_linux_amd64` for Linux x86_64, built on Ubuntu 24.04 with
+v0.2.0 provides `caeser_linux_amd64` for Linux x86_64, built on Ubuntu 24.04 with
 CGO enabled. It is dynamically linked; Alpine/musl and older glibc environments
 need a compatible source build. Download it and its
 `SHA256SUMS` file from the same [release](https://github.com/caeser-org/ceaser/releases).
@@ -34,14 +34,14 @@ install -m 0755 caeser_linux_amd64 "$HOME/.local/bin/caeser"
 ```
 
 Use a source build for other platforms. The GitHub integration defaults to
-`caeser_version: v0.1.2`, which downloads the prebuilt binary. `latest` follows the
+`caeser_version: v0.2.0`, which downloads the prebuilt binary. `latest` follows the
 latest release. `main` explicitly builds source at a resolved commit. The
 `uses:` reference selects the workflow code independently of the binary version.
 
 For a custom job, the setup action installs the binary and adds it to PATH:
 
 ```yaml
-- uses: caeser-org/ceaser@v0.1.2
+- uses: caeser-org/ceaser@v0.2.0
 - run: caeser version
 ```
 

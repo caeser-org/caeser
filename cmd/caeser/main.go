@@ -36,7 +36,7 @@ import (
 	"github.com/caeser-org/ceaser/internal/persistence"
 )
 
-const defaultVersion = "v0.1.2"
+const defaultVersion = "v0.2.0"
 
 func readBoundedFile(path string, limit int64) ([]byte, error) {
 	file, err := os.Open(path)
