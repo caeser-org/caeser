@@ -17,6 +17,13 @@ func BuildAgentInput(report Report) agent.Input {
 	var context strings.Builder
 	fmt.Fprintf(&context, "revision=%q reproduction=%q\n",
 		bound(report.Environment.HeadCommit, 128), bound(report.ReproductionStatus, 128))
+	if report.CausalExplanation != nil && report.CausalExplanation.Hypothesis != "" {
+		fmt.Fprintf(&context, "existing deterministic lead (do not merely repeat): %q\n", bound(report.CausalExplanation.Hypothesis, 700))
+	}
+	if report.RootCause.Statement != "" {
+		fmt.Fprintf(&context, "deterministic root-cause assessment=%q causality=%q verification=%q\n",
+			bound(report.RootCause.Statement, 700), bound(report.RootCause.CausalityStatus, 80), bound(report.RootCause.VerificationStatus, 80))
+	}
 	for _, episode := range report.FailureEpisodes[:min(len(report.FailureEpisodes), 3)] {
 		fmt.Fprintf(&context, "failed test=%q message=%q\n",
 			bound(episode.TestIdentifier, 160), bound(episode.FailureMessage, 384))

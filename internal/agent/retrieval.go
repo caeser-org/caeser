@@ -44,7 +44,7 @@ func (c *Client) AnalyzeWithCode(ctx context.Context, in Input, repo, revision s
 	_, err := c.complete(planCtx, evidencePrompt(Input{
 		Classification: in.Classification, Command: in.Command, Context: in.Context,
 		Evidence: CompactEvidence(in.Evidence, in.Context, 10<<10),
-	}, "Choose at most five read-only Go code lookups to clarify this CI failure. Look outside the initial candidates where useful. Use read with a repository-relative .go path and a one-based line number, or search with a literal Go symbol or code fragment and line 0. Search matches are textual leads, including possible callers, rather than resolved call edges. Return a lookups array."), "code_lookups", map[string]any{
+	}, "Choose at most five read-only Go code lookups to explain the operation behind this CI failure. Do not spend all lookups rereading stack-frame declarations. Read deeper into candidate function bodies, relevant callers/callees, and the failing test setup so the final analysis can identify a mechanism and assess a fix. Use read with a repository-relative .go path and one-based line number, or search with a literal Go symbol/code fragment and line 0. Search matches are textual leads, including possible callers, not resolved call edges. Return a lookups array."), "code_lookups", map[string]any{
 		"type": "object", "required": []string{"lookups"}, "properties": map[string]any{
 			"lookups": map[string]any{"type": "array", "items": map[string]any{
 				"type": "object", "required": []string{"kind", "query", "line"}, "properties": map[string]any{
@@ -112,7 +112,7 @@ func retrieveCode(ctx context.Context, repo, revision string, lookup codeLookup)
 		}
 		var out strings.Builder
 		fmt.Fprintf(&out, "%s:%d at %s\n", file, lookup.Line, revision)
-		for i := max(0, lookup.Line-5); i < min(len(lines), lookup.Line+4) && out.Len() < 1350; i++ {
+		for i := max(0, lookup.Line-16); i < min(len(lines), lookup.Line+15) && out.Len() < 3500; i++ {
 			line := lines[i]
 			if len(line) > 160 {
 				line = line[:160] + "…"

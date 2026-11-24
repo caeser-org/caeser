@@ -60,7 +60,7 @@ func TestAnalyzeWithCodeReadsPinnedRevisionBeyondInitialEvidence(t *testing.T) {
 				t.Fatalf("incorrect evidence passed to final analysis: %s", prompt)
 			}
 			id := regexp.MustCompile(`E-code-[a-f0-9]+`).FindString(prompt)
-			result = `{"hypotheses":[{"statement":"Inspect producer.","affected_component":"producer.go:2","supporting_evidence_ids":["` + id + `"],"confidence":0.5}]}`
+			result = `{"assessment":"Source snippet found, mechanism not yet verified.","hypotheses":[{"statement":"Inspect producer.","affected_component":"producer.go:2","supporting_evidence_ids":["` + id + `"],"confidence":0.5,"distinction_from_existing_leads":"Names the producer operation rather than repeating the failure frame.","next_check":"Run the targeted test with the producer input logged.","suggested_fix":"","fix_evidence_ids":[]}]}`
 		}
 		envelope, _ := json.Marshal(map[string]any{
 			"model": "fixture", "choices": []any{map[string]any{"message": map[string]string{"content": result}}},

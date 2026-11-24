@@ -520,7 +520,11 @@ jobs:
               agent_status="$(jq -r '.agent_status // "unknown"' "$report")"
               if [ "$agent_status" = "completed" ]; then
                 echo "**Gemini analysis:** completed ($(jq -r '.agent.model // "configured model"' "$report"))"
-                agent_hypotheses="$(jq -r '.agent.hypotheses[]? | "- " + .statement + " (confidence " + ((.confidence // 0)|tostring) + "; evidence: " + ((.supporting_evidence_ids // [])|join(", ")) + ")"' "$report")"
+                agent_assessment="$(jq -r '.agent.assessment // ""' "$report")"
+                if [ -n "$agent_assessment" ]; then
+                  echo "**Model assessment:** $agent_assessment"
+                fi
+                agent_hypotheses="$(jq -r '.agent.hypotheses[]? | "- **Hypothesis:** " + .statement + " (confidence " + ((.confidence // 0)|tostring) + "; component: " + (.affected_component // "unspecified") + "; evidence: " + ((.supporting_evidence_ids // [])|join(", ")) + ")\n  - Difference from existing leads: " + (.distinction_from_existing_leads // "not stated") + "\n  - Next check: " + (.next_check // "not stated") + "\n  - Suggested fix (not applied or verified): " + (if (.suggested_fix // "") == "" then "none supported by the supplied evidence" else .suggested_fix + " (evidence: " + ((.fix_evidence_ids // [])|join(", ")) + ")" end)' "$report")"
                 if [ -n "$agent_hypotheses" ]; then
                   echo
                   echo '**Gemini hypotheses (unverified):**'

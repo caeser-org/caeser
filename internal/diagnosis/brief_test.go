@@ -38,15 +38,19 @@ func TestInvestigationBriefShowsModelHypothesesAsUnverified(t *testing.T) {
 			Provider: "gemini",
 			Model:    "gemini-3.8-flash",
 			Hypotheses: []agent.Hypothesis{{
-				Statement:   "The route tree may index beyond its child slice.",
-				Component:   "router",
-				EvidenceIDs: []string{"E-panic"},
-				Confidence:  0.62,
+				Statement:      "The route tree may index beyond its child slice.",
+				Component:      "router",
+				EvidenceIDs:    []string{"E-panic"},
+				Confidence:     0.62,
+				Distinction:    "The deterministic lead names the function but not the invalid index.",
+				NextCheck:      "Inspect the child index before the slice access.",
+				FixSuggestion:  "Bound the index before accessing the child slice.",
+				FixEvidenceIDs: []string{"E-panic"},
 			}},
 		},
 	}
 	got := InvestigationBrief(report, false)
-	for _, needle := range []string{"## Model analysis", "gemini/gemini-3.8-flash", "model-generated leads, not verified findings", "The route tree may index beyond its child slice", "E-panic"} {
+	for _, needle := range []string{"## Model analysis", "gemini/gemini-3.8-flash", "not been applied or verified", "The route tree may index beyond its child slice", "Difference from existing leads", "Next check", "Suggested fix", "E-panic"} {
 		if !strings.Contains(got, needle) {
 			t.Errorf("brief missing model analysis detail %q", needle)
 		}

@@ -221,9 +221,21 @@ func InvestigationBrief(report Report, prompt bool) string {
 	if report.AgentStatus != "" && report.AgentStatus != "disabled" && report.AgentStatus != "deferred" {
 		var modelRows []string
 		if report.AgentStatus == "completed" && report.Agent != nil {
-			modelRows = append(modelRows, fmt.Sprintf("Completed with %s/%s. The following are model-generated leads, not verified findings.", bound(report.Agent.Provider, 80), bound(report.Agent.Model, 120)))
+			modelRows = append(modelRows, fmt.Sprintf("Completed with %s/%s. Suggestions are model-generated and have not been applied or verified.", bound(report.Agent.Provider, 80), bound(report.Agent.Model, 120)))
+			if report.Agent.Assessment != "" {
+				modelRows = append(modelRows, "Assessment: "+bound(report.Agent.Assessment, 900))
+			}
 			for _, hypothesis := range report.Agent.Hypotheses[:min(len(report.Agent.Hypotheses), 8)] {
-				modelRows = append(modelRows, fmt.Sprintf("Hypothesis (confidence %.2f): %s; evidence: %s", hypothesis.Confidence, bound(hypothesis.Statement, 900), briefIDs(hypothesis.EvidenceIDs)))
+				modelRows = append(modelRows, fmt.Sprintf("Hypothesis (confidence %.2f, %s): %s; evidence: %s", hypothesis.Confidence, bound(hypothesis.Component, 120), bound(hypothesis.Statement, 900), briefIDs(hypothesis.EvidenceIDs)))
+				modelRows = append(modelRows, "Difference from existing leads: "+bound(hypothesis.Distinction, 700))
+				modelRows = append(modelRows, "Next check: "+bound(hypothesis.NextCheck, 700))
+				fix := hypothesis.FixSuggestion
+				if fix == "" {
+					fix = "No safe fix proposed from the supplied evidence."
+				} else {
+					fix += " (support: " + briefIDs(hypothesis.FixEvidenceIDs) + ")"
+				}
+				modelRows = append(modelRows, "Suggested fix: "+bound(fix, 900))
 			}
 		} else {
 			modelRows = append(modelRows, "Model analysis was unavailable; see the JSON report for provider status and error details.")

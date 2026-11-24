@@ -20,14 +20,19 @@ type Input struct {
 	Evidence       []Evidence
 }
 type Hypothesis struct {
-	Statement   string   `json:"statement"`
-	Component   string   `json:"affected_component"`
-	EvidenceIDs []string `json:"supporting_evidence_ids"`
-	Confidence  float64  `json:"confidence"`
+	Statement      string   `json:"statement"`
+	Component      string   `json:"affected_component"`
+	EvidenceIDs    []string `json:"supporting_evidence_ids"`
+	Confidence     float64  `json:"confidence"`
+	Distinction    string   `json:"distinction_from_existing_leads"`
+	NextCheck      string   `json:"next_check"`
+	FixSuggestion  string   `json:"suggested_fix,omitempty"`
+	FixEvidenceIDs []string `json:"fix_evidence_ids,omitempty"`
 }
 type Report struct {
 	Provider   string       `json:"provider"`
 	Model      string       `json:"model"`
+	Assessment string       `json:"assessment"`
 	Hypotheses []Hypothesis `json:"hypotheses"`
 	Retrieved  []Evidence   `json:"retrieved_evidence,omitempty"`
 }
@@ -36,7 +41,7 @@ type Client struct {
 	HTTP            *http.Client
 }
 
-const maxHypotheses = 12
+const maxHypotheses = 3
 
 // maxPromptEvidenceBytes bounds variable evidence and context sent to the
 // model. Deterministic diagnosis continues to use the complete evidence set.
@@ -90,6 +95,9 @@ func CompactEvidence(items []Evidence, context string, budget int) []Evidence {
 // ValidateReport enforces the boundary contract independently of the provider.
 // A model may propose interpretations, but it may not create evidence.
 func ValidateReport(out Report, evidence []Evidence) error {
+	if strings.TrimSpace(out.Assessment) == "" {
+		return fmt.Errorf("agent report has no assessment")
+	}
 	known := map[string]bool{}
 	for _, e := range evidence {
 		if strings.TrimSpace(e.ID) == "" {
@@ -107,6 +115,12 @@ func ValidateReport(out Report, evidence []Evidence) error {
 		if h.Confidence < 0 || h.Confidence > 1 {
 			return fmt.Errorf("hypothesis %d confidence outside [0,1]", i)
 		}
+		if strings.TrimSpace(h.Distinction) == "" {
+			return fmt.Errorf("hypothesis %d does not distinguish itself from existing leads", i)
+		}
+		if strings.TrimSpace(h.NextCheck) == "" {
+			return fmt.Errorf("hypothesis %d has no discriminating next check", i)
+		}
 		seen := map[string]bool{}
 		if len(h.EvidenceIDs) == 0 {
 			return fmt.Errorf("hypothesis %d has no evidence references", i)
@@ -119,6 +133,14 @@ func ValidateReport(out Report, evidence []Evidence) error {
 				return fmt.Errorf("hypothesis %d repeats evidence ID %q", i, id)
 			}
 			seen[id] = true
+		}
+		if strings.TrimSpace(h.FixSuggestion) != "" && len(h.FixEvidenceIDs) == 0 {
+			return fmt.Errorf("hypothesis %d suggests a fix without evidence references", i)
+		}
+		for _, id := range h.FixEvidenceIDs {
+			if !known[id] {
+				return fmt.Errorf("agent fix references unknown evidence ID %q", id)
+			}
 		}
 	}
 	return nil
@@ -143,25 +165,35 @@ func evidencePrompt(in Input, instructions string) string {
 func (c *Client) Analyze(ctx context.Context, in Input) (Report, error) {
 	in.Evidence = CompactEvidence(in.Evidence, in.Context, 0)
 	var out struct {
+		Assessment string       `json:"assessment"`
 		Hypotheses []Hypothesis `json:"hypotheses"`
 	}
-	model, err := c.complete(ctx, evidencePrompt(in, "Explain plausible mechanisms and distinguish observed facts from inference. Candidate locations and historical matches are leads. Give the most useful code location and next check in each statement. Use only supplied evidence IDs. Return no hypotheses if the evidence cannot support one."), "agent_report", map[string]any{
-		"type": "object", "properties": map[string]any{"hypotheses": map[string]any{"type": "array", "items": map[string]any{"type": "object", "properties": map[string]any{
-			"statement": map[string]any{"type": "string"}, "affected_component": map[string]any{"type": "string"},
-			"supporting_evidence_ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "confidence": map[string]any{"type": "number"},
-		}, "required": []string{"statement", "affected_component", "supporting_evidence_ids", "confidence"}}}}, "required": []string{"hypotheses"},
+	instructions := `Investigate the failure as a debugging partner. The deterministic diagnosis and candidate locations are already available; do not merely restate the failure, stack frame, or primary suspect as a new hypothesis.
+Return up to three materially different causal mechanisms. A useful hypothesis names a source operation or condition, the bad value/state it produces or consumes, and how that can cause the observed failure. Cite supplied evidence IDs. Explicitly explain how it differs from the existing leads.
+For each hypothesis, give one smallest next check that can distinguish it from alternatives. Give a concrete suggested code change only when the supplied source supports that change. If the cause or safe fix is not established, leave suggested_fix empty and state the missing evidence in the assessment or next_check. Never invent a patch or claim runtime verification.
+If the evidence supports no distinct mechanism, return an empty hypotheses array and explain what specific source or runtime evidence is missing. Keep observations, hypotheses, and fix suggestions separate.`
+	model, err := c.complete(ctx, evidencePrompt(in, instructions), "agent_report", map[string]any{
+		"type": "object", "properties": map[string]any{
+			"assessment": map[string]any{"type": "string"},
+			"hypotheses": map[string]any{"type": "array", "maxItems": maxHypotheses, "items": map[string]any{"type": "object", "properties": map[string]any{
+				"statement": map[string]any{"type": "string"}, "affected_component": map[string]any{"type": "string"},
+				"supporting_evidence_ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "confidence": map[string]any{"type": "number"},
+				"distinction_from_existing_leads": map[string]any{"type": "string"}, "next_check": map[string]any{"type": "string"},
+				"suggested_fix": map[string]any{"type": "string"}, "fix_evidence_ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+			}, "required": []string{"statement", "affected_component", "supporting_evidence_ids", "confidence", "distinction_from_existing_leads", "next_check", "suggested_fix", "fix_evidence_ids"}}},
+		}, "required": []string{"assessment", "hypotheses"},
 	}, &out)
 	if err != nil {
 		return Report{}, err
 	}
-	report := Report{Provider: "gateway", Model: model, Hypotheses: out.Hypotheses}
+	report := Report{Provider: "gateway", Model: model, Assessment: out.Assessment, Hypotheses: out.Hypotheses}
 	return report, ValidateReport(report, in.Evidence)
 }
 
 func (c *Client) complete(ctx context.Context, prompt, name string, schema map[string]any, out any) (string, error) {
 	body, _ := json.Marshal(map[string]any{
 		"model": c.Model, "messages": []map[string]string{{"role": "user", "content": prompt}},
-		"temperature": 0, "max_tokens": 512,
+		"temperature": 0, "max_tokens": 1024,
 		"response_format": map[string]any{"type": "json_schema", "json_schema": map[string]any{
 			"name": name, "strict": true, "schema": schema,
 		}},

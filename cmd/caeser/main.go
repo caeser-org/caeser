@@ -853,9 +853,22 @@ func diagnosisText(report diagnosis.Report) string {
 	}
 	if report.Agent != nil {
 		fmt.Fprintf(&b, "\nagent analysis (%s/%s):\n", report.Agent.Provider, report.Agent.Model)
-		for _, h := range report.Agent.Hypotheses {
-			fmt.Fprintf(&b, "  (confidence %.2f) %s [%s] evidence: %s\n", h.Confidence, h.Statement, h.Component, strings.Join(h.EvidenceIDs, ", "))
+		if report.Agent.Assessment != "" {
+			fmt.Fprintf(&b, "  assessment: %s\n", report.Agent.Assessment)
 		}
+		b.WriteString("  suggestions are not applied or verified\n")
+		for _, h := range report.Agent.Hypotheses {
+			fmt.Fprintf(&b, "  hypothesis (confidence %.2f) %s [%s]\n", h.Confidence, h.Statement, h.Component)
+			fmt.Fprintf(&b, "    difference from existing leads: %s\n", h.Distinction)
+			fmt.Fprintf(&b, "    evidence: %s\n    next check: %s\n", strings.Join(h.EvidenceIDs, ", "), h.NextCheck)
+			if h.FixSuggestion == "" {
+				b.WriteString("    suggested fix: none supported by current evidence\n")
+			} else {
+				fmt.Fprintf(&b, "    suggested fix (unverified): %s; evidence: %s\n", h.FixSuggestion, strings.Join(h.FixEvidenceIDs, ", "))
+			}
+		}
+	} else if report.AgentStatus == "failed" {
+		fmt.Fprintf(&b, "\nagent analysis unavailable: %s\n", valueOr(report.AgentError, "provider request failed"))
 	}
 
 	b.WriteString("\nuncertainty:\n")
