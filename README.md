@@ -15,8 +15,7 @@ gates are satisfied.
 > those five are now development-exposed and score 3/5 after tuning. A later
 > ten-case batch scored **3/10 (30%) exact function** on its first evaluation,
 > but that batch has since been exposed by model selection, so there is
-> currently **no clean independent number**. Details are in
-> [the evaluation status](evaluation/final-mission/INDEPENDENT-RESULTS.md).
+> currently **no clean independent number**.
 > Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
 > auto-merge, auto-revert, or assign blame.
 
@@ -25,7 +24,6 @@ gates are satisfied.
 [Quickstart](#try-it-locally) · [GitHub Actions](#add-it-to-github-actions) ·
 [How it works](#why-the-engine-is-structured-this-way) ·
 [Capabilities & limits](docs/capabilities.md) ·
-[Independent results](evaluation/final-mission/INDEPENDENT-RESULTS.md) ·
 [Contribute](#contributing)
 
 ## What you get
@@ -56,7 +54,7 @@ not silently become an answer to another.
 | Independent report export | A useful investigation brief can be generated and shared without a model call. |
 
 Measured localization and verification results are listed under
-[validation](#status), with links to the reports and their limits.
+[validation](#status).
 
 ## Try it locally
 
@@ -248,9 +246,7 @@ What the engine computes today:
   independent rate.
 - **Ten-case batch**: scored 3/10 with one abstention on its first evaluation,
   then used to accept or reject two engine changes. It is now development-exposed
-  and is not an independent number. See
-  [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md) and
-  [FRESH10-RESULTS.md](evaluation/holdout/FRESH10-RESULTS.md).
+  and is not an independent number.
 
 There is currently no clean independent measurement. There is no claim that
 Caeser identifies a defect-introducing change reliably on unfamiliar code.
