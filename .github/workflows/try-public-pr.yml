@@ -348,6 +348,7 @@ jobs:
           CAESER_GATEWAY_PROVIDER: gemini
           CAESER_GATEWAY_MODEL: ${{ inputs.gemini_model }}
           CAESER_GATEWAY_ADDR: 127.0.0.1:8787
+          CAESER_DB: ${{ runner.temp }}/caeser-gateway.db
           GOMODCACHE: ${{ runner.temp }}/caeser-gomodcache
           GOCACHE: ${{ runner.temp }}/caeser-gocache
         run: |
