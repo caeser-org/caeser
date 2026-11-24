@@ -31,3 +31,7 @@ Workflow `final-eval.yml` now runs this manifest. Run `45057346470` on
 uploaded `final-mission-eval` artifact: 10 cases, 10 verified, 3 exact-function
 hits. The same run reported 3 of 5 on the exposed holdout and 6 of 6 on the
 paired development cases with no regressions.
+
+The holdout runner was later corrected to compare the short function name, so
+`FlagSet.Count` no longer counts as a hit for culprit `Set`. Recomputing this
+batch under the corrected metric still gives 3 of 10.

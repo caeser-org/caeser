@@ -80,7 +80,10 @@ for i in $(seq 0 $((n - 1))); do
   "$CAESER" diagnose --repo "$dir" --command "$cmd" --attempts 1 --json > "$CACHE/$base_sha.report.json" 2>"$CACHE/$base_sha.err" || true
   primary="$(jq -r '.likely_function.primary.function // "ABSTAIN"' "$CACHE/$base_sha.report.json" 2>/dev/null)"
   trace="$(jq -r '.causal_trace.status // "-"' "$CACHE/$base_sha.report.json" 2>/dev/null)"
-  hit=false; [[ "$primary" == *"$culprit"* ]] && hit=true
+  # Compare the short function name, so "FlagSet.Count" does not count as a
+  # hit for culprit "Set". Receiver and package prefixes are not the function.
+  primary_short="${primary##*.}"
+  hit=false; [[ "$primary_short" == "$culprit" ]] && hit=true
   emit "{\"repo\":\"$repo\",\"base_sha\":\"$base\",\"head_sha\":\"$head\",\"reviewed_culprit\":\"$culprit\",\"verified\":true,\"primary\":\"$primary\",\"trace\":\"$trace\",\"hit\":$hit,\"exposed\":false}"
   echo "$repo@$base VERIFIED primary=$primary culprit=$culprit hit=$hit" >&2
 done
