@@ -137,3 +137,78 @@ func TestCandidateReportBoundedAndDeduplicated(t *testing.T) {
 		t.Fatal("evidence ids not deduplicated and bounded")
 	}
 }
+
+// A function the named failing test reaches through a type-resolved call path is
+// stronger evidence than an equally-scored sibling reached only by fan-out. The
+// two candidates here are identical except for that path membership.
+func TestCandidateReportPrefersFailingTestVerifiedPathTarget(t *testing.T) {
+	report := Report{
+		FailureEpisodes: []domain.FailureEpisode{{TestIdentifier: "TestSettings"}},
+		ExecutionPaths: []domain.ExecutionPath{{
+			Status: "inferred_call_path",
+			Locations: []domain.CodeLocation{
+				{FilePath: "props_test.go", SymbolIdentity: "go:props_test.go:Test:TestSettings"},
+				{FilePath: "props.go", SymbolIdentity: "go:props.go:Method:CreateSettings"},
+			},
+		}},
+		Candidates: []domain.CandidateLocation{
+			{Location: domain.CodeLocation{FilePath: "props.go", SymbolIdentity: "go:props.go:Method:CreateRouteSettings", StartLine: 20, Provenance: "inferred_caller", LocationType: "Method"}},
+			{Location: domain.CodeLocation{FilePath: "props.go", SymbolIdentity: "go:props.go:Method:CreateSettings", StartLine: 40, Provenance: "inferred_caller", LocationType: "Method"}},
+		},
+	}
+	got := BuildCandidateReport(report)
+	if len(got.Entries) == 0 || got.Entries[0].Function != "CreateSettings" {
+		t.Fatalf("verified failing-test path target not ranked first: %#v", got.Entries)
+	}
+	report.CandidateReport = &got
+	likely := BuildLikelyFunction(report)
+	if likely.Primary == nil || likely.Primary.Function != "CreateSettings" {
+		t.Fatalf("likely-function tier did not follow the evidence order: %#v", likely.Primary)
+	}
+}
+
+// Observed execution evidence must outrank a failing-test path target, so the
+// innermost frame keeps the lead when both exist.
+func TestCandidateReportKeepsObservedFrameAheadOfPathTarget(t *testing.T) {
+	report := Report{
+		FailureEpisodes: []domain.FailureEpisode{{TestIdentifier: "TestSettings"}},
+		ExecutionPaths: []domain.ExecutionPath{{
+			Status: "inferred_call_path",
+			Locations: []domain.CodeLocation{
+				{FilePath: "props_test.go", SymbolIdentity: "go:props_test.go:Test:TestSettings"},
+				{FilePath: "props.go", SymbolIdentity: "go:props.go:Method:CreateSettings"},
+			},
+		}},
+		Candidates: []domain.CandidateLocation{
+			{Location: domain.CodeLocation{FilePath: "props.go", SymbolIdentity: "go:props.go:Function:parseFields", StartLine: 16, Provenance: "enclosing_symbol", LocationType: "Function"},
+				Score: domain.ScoreVector{ExecutionRelevance: 1, AvailableDimensions: []string{"execution"}}},
+			{Location: domain.CodeLocation{FilePath: "props.go", SymbolIdentity: "go:props.go:Method:CreateSettings", StartLine: 40, Provenance: "inferred_caller", LocationType: "Method"}},
+		},
+	}
+	got := BuildCandidateReport(report)
+	if len(got.Entries) == 0 || got.Entries[0].Function != "parseFields" {
+		t.Fatalf("observed frame lost the lead: %#v", got.Entries)
+	}
+}
+
+// Within observed execution evidence, the innermost reported frame must win.
+// Both candidates enclose a frame in the same file; only the inner function
+// encloses the deepest frame, which is where the failure actually happened.
+func TestCandidateReportPrefersInnermostObservedFrame(t *testing.T) {
+	report := Report{
+		Candidates: []domain.CandidateLocation{
+			{Location: domain.CodeLocation{FilePath: "x.go", SymbolIdentity: "go:x.go:Function:Outer", StartLine: 10, EndLine: 100, Provenance: "enclosing_symbol", LocationType: "Function"},
+				Score: domain.ScoreVector{ExecutionRelevance: 1, AvailableDimensions: []string{"execution"}}},
+			{Location: domain.CodeLocation{FilePath: "x.go", SymbolIdentity: "go:x.go:Function:Inner", StartLine: 40, EndLine: 55, Provenance: "enclosing_symbol", LocationType: "Function"},
+				Score: domain.ScoreVector{ExecutionRelevance: 1, AvailableDimensions: []string{"execution"}}},
+		},
+		Evidence: []EvidenceItem{
+			{ID: "E-frame-0", Kind: "execution_stack_frame", Source: "/toolchain/runtime/panic.go", Detail: "CI execution stack frame observed at /toolchain/runtime/panic.go:900; this establishes a reported location, not causality"},
+			{ID: "E-frame-1", Kind: "execution_stack_frame", Source: "x.go", Detail: "CI execution stack frame observed at /src/x.go:45; this establishes a reported location, not causality"},
+		},
+	}
+	got := BuildCandidateReport(report)
+	if len(got.Entries) == 0 || got.Entries[0].Function != "Inner" {
+		t.Fatalf("innermost observed frame did not win: %#v", got.Entries)
+	}
+}

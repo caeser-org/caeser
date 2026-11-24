@@ -337,6 +337,12 @@ func (d *Diagnoser) runStagedIntelligence(ctx context.Context, report *Report, w
 		// failures from the same source evidence. This is a separate path from the
 		// race-oriented investigation and never claims a causal conclusion itself.
 		buildDeterministicCausalChain(report, workspace, snapshot, candidates)
+		// Backward causal investigation from the failure's manifestation site
+		// toward the operation that produced the invalid value or error. It
+		// reuses the same snapshot/typed-call evidence and only admits leads.
+		if !d.cfg.NoCausalTrace {
+			buildFailureOriginTrace(report, workspace, snapshot, frames)
+		}
 		// Explicit, opt-in runtime observation of the operation feeding the
 		// failing assertion. It reuses the configured executor on a bounded
 		// disposable copy and is never implied by source inspection. The

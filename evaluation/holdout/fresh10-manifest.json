@@ -1,0 +1,245 @@
+{
+  "note": "Frozen fresh independent batch of ten cases. Each was verified before its first and only scoring run. After that run, the batch was used to select and reject two candidate engine changes, so it is now development-exposed and MUST NOT be reported as an independent accuracy number. A new frozen batch is required for any independent claim. Do not tune against this batch.",
+  "cases": [
+    {
+      "id": "gin-gonic-gin-4852",
+      "repo": "gin-gonic/gin",
+      "base_sha": "e8f24969d59611428b03d02424b8f4bb55a1ef91",
+      "head_sha": "ea9fab99e01d55a5e4f8daacc0d11ccffaee0a15",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "getValue",
+      "reviewed_culprit_file": "tree.go",
+      "injected_tests": [
+        {
+          "path": "routes_test.go",
+          "sha256": "7096cce34d0b22cf8b10e02a459fd4da1ffa45d1b68fd40fa1336ff1391ae257"
+        }
+      ],
+      "provenance": "gin-gonic/gin#4852 merged bug fix; reviewed from the tree.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "node.getValue",
+        "reviewed_culprit": "getValue",
+        "exact_function_hit": true,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "go-chi-chi-1159",
+      "repo": "go-chi/chi",
+      "base_sha": "735ae2b87f8c733d616e809ae86e0985c1bc3350",
+      "head_sha": "aba86186a27484f3cadc55b8d6448d2049af71bf",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "Mount",
+      "reviewed_culprit_file": "mux.go",
+      "injected_tests": [
+        {
+          "path": "mux_test.go",
+          "sha256": "5909401faa8d4a76e78c75bb5a216f7835bac09096c182956e0d7be4d7245a03"
+        }
+      ],
+      "provenance": "go-chi/chi#1159 merged bug fix; reviewed from the mux.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "ABSTAIN",
+        "reviewed_culprit": "Mount",
+        "exact_function_hit": false,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "go-chi-chi-1156",
+      "repo": "go-chi/chi",
+      "base_sha": "9b6ddcddb96aa14648702e7eaabef38e14e65157",
+      "head_sha": "38939062c5df4d3e8814aad1a488983112627ced",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "NewCompressor",
+      "reviewed_culprit_file": "middleware/compress.go",
+      "injected_tests": [
+        {
+          "path": "middleware/compress_test.go",
+          "sha256": "49c8a68651c0542fde332dd035990226dd344d05b980e6591e46f0777a6571bb"
+        }
+      ],
+      "provenance": "go-chi/chi#1156 merged bug fix; reviewed from the middleware/compress.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "NewCompressor",
+        "reviewed_culprit": "NewCompressor",
+        "exact_function_hit": true,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "go-chi-chi-1148",
+      "repo": "go-chi/chi",
+      "base_sha": "bc02284e9db220c644912320fe1db6bc9b4a087c",
+      "head_sha": "29164f023bf9319e74d5961a21a712653bb98c83",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "routes",
+      "reviewed_culprit_file": "tree.go",
+      "injected_tests": [
+        {
+          "path": "tree_test.go",
+          "sha256": "47488f281c1d81ed2a0a68c29f9524cd48eba23e827cb5a7e2584d6eab8b7042"
+        }
+      ],
+      "provenance": "go-chi/chi#1148 merged bug fix; reviewed from the tree.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "NewRouteContext",
+        "reviewed_culprit": "routes",
+        "exact_function_hit": false,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "go-chi-chi-1097",
+      "repo": "go-chi/chi",
+      "base_sha": "f975af0cb10cbefaccf0422385420fe62722d648",
+      "head_sha": "818fdcfc4786168651768377ba647cf9dd5b3953",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "routeHTTP",
+      "reviewed_culprit_file": "mux.go",
+      "injected_tests": [
+        {
+          "path": "pattern_test.go",
+          "sha256": "7a1f3659609cc509536c0b67de9d7f78c182103d6b053977f7b30a4592e4de0d"
+        }
+      ],
+      "provenance": "go-chi/chi#1097 merged bug fix; reviewed from the mux.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "NewRouter",
+        "reviewed_culprit": "routeHTTP",
+        "exact_function_hit": false,
+        "trace": "traced"
+      }
+    },
+    {
+      "id": "labstack-echo-3238",
+      "repo": "labstack/echo",
+      "base_sha": "f275a6b1109ee90f288b51a5e2a6fcc617491255",
+      "head_sha": "fbd734fa3a869dcef11689271313c80d08846b41",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "BindBody",
+      "reviewed_culprit_file": "bind.go",
+      "injected_tests": [
+        {
+          "path": "bind_test.go",
+          "sha256": "438dde272d73cab9115fb9501fe8dac2d104493bfe999286e03b1775bacb54fc"
+        }
+      ],
+      "provenance": "labstack/echo#3238 merged bug fix; reviewed from the bind.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "bindData",
+        "reviewed_culprit": "BindBody",
+        "exact_function_hit": false,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "labstack-echo-3113",
+      "repo": "labstack/echo",
+      "base_sha": "b59b347c95f78066152782c21e3c315088b49c79",
+      "head_sha": "eadbef28df3b293a7e7b39977ac949c5907fa559",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "Add",
+      "reviewed_culprit_file": "router.go",
+      "injected_tests": [
+        {
+          "path": "router_test.go",
+          "sha256": "e5bf7d49e6e9b74bf158342d7d77e4422c01583bb6f87ef91d0279955cdcd625"
+        }
+      ],
+      "provenance": "labstack/echo#3113 merged bug fix; reviewed from the router.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "DefaultRouter.Route",
+        "reviewed_culprit": "Add",
+        "exact_function_hit": false,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "golang-jwt-jwt-511",
+      "repo": "golang-jwt/jwt",
+      "base_sha": "0c0d48702ccdf7c3c8b1c3a11dd5a3939d8ec69a",
+      "head_sha": "1a11d3724e63105d751decf9adbdc90165137b45",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "parseClaimsString",
+      "reviewed_culprit_file": "map_claims.go",
+      "injected_tests": [
+        {
+          "path": "map_claims_test.go",
+          "sha256": "5a20c7992f75d91fa3241688e4d0ec86c80cbe8ee7862a808f58e6f9d47d4aa5"
+        }
+      ],
+      "provenance": "golang-jwt/jwt#511 merged bug fix; reviewed from the map_claims.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "MapClaims.GetAudience",
+        "reviewed_culprit": "parseClaimsString",
+        "exact_function_hit": false,
+        "trace": "partial"
+      }
+    },
+    {
+      "id": "spf13-pflag-511",
+      "repo": "spf13/pflag",
+      "base_sha": "53c3173f539858d4a11807a82955813afc38222f",
+      "head_sha": "d77ebfaebd65f3d860d1351b6b4b01827e54e8e5",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "parseSingleShortArg",
+      "reviewed_culprit_file": "flag.go",
+      "injected_tests": [
+        {
+          "path": "flag_test.go",
+          "sha256": "77bc82b79e8ded93447b78a26f392a6cc740a668c922b0c770fc301ba0aa0db5"
+        }
+      ],
+      "provenance": "spf13/pflag#511 merged bug fix; reviewed from the flag.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "FlagSet.parseSingleShortArg",
+        "reviewed_culprit": "parseSingleShortArg",
+        "exact_function_hit": true,
+        "trace": "unresolved"
+      }
+    },
+    {
+      "id": "spf13-pflag-542",
+      "repo": "spf13/pflag",
+      "base_sha": "f10a4971d3febada41a0568eb2535a284970005d",
+      "head_sha": "44b0d4763618e33d0df000d727f3c8b05d1cb4a4",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "wrap",
+      "reviewed_culprit_file": "flag.go",
+      "injected_tests": [
+        {
+          "path": "printusage_test.go",
+          "sha256": "6db3e6e89bdee506fa60cc23e092d28198e12525439634757e217f22f613f687"
+        }
+      ],
+      "provenance": "spf13/pflag#542 merged bug fix; reviewed from the flag.go fix hunk",
+      "exposed": true,
+      "first_evaluation": {
+        "verified": true,
+        "primary": "NewFlagSet",
+        "reviewed_culprit": "wrap",
+        "exact_function_hit": false,
+        "trace": "unresolved"
+      }
+    }
+  ]
+}

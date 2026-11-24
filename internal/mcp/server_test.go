@@ -147,11 +147,30 @@ func TestCancelInvestigationUsesContext(t *testing.T) {
 	if err := json.Unmarshal(server.Handle(context.Background(), []byte(cancelRequest)), &cancelled); err != nil || cancelled.Error != nil {
 		t.Fatalf("cancel failed: %v", cancelled.Error)
 	}
+	cancelledState := false
 	for deadline := time.Now().Add(15 * time.Second); time.Now().Before(deadline); time.Sleep(100 * time.Millisecond) {
 		inv, getErr := store.GetInvestigation(domain.ID(started.Result.ID))
 		if getErr == nil && inv.Status == domain.StatusCancelled {
+			cancelledState = true
+			break
+		}
+	}
+	if !cancelledState {
+		t.Fatal("investigation did not reach cancelled state")
+	}
+	// Cancellation persists the terminal status before the worker goroutine
+	// finishes. Wait for that goroutine to leave the running set, then allow a
+	// short bounded settle so its final store write completes before t.TempDir
+	// removes the repository and artifact directories.
+	id := domain.ID(started.Result.ID)
+	for deadline := time.Now().Add(15 * time.Second); time.Now().Before(deadline); time.Sleep(50 * time.Millisecond) {
+		server.mu.Lock()
+		_, stillRunning := server.running[id]
+		server.mu.Unlock()
+		if !stillRunning {
+			time.Sleep(100 * time.Millisecond)
 			return
 		}
 	}
-	t.Fatal("investigation did not reach cancelled state")
+	t.Fatal("investigation worker did not exit after cancellation")
 }

@@ -18,3 +18,13 @@ command:
 license_note: "Public GitHub Actions log; repository is publicly available under its repository license."
 redacted: true
 log_cache_path: ""                  # optional: alternate path to cached log
+
+# Reproducibility (required when the failure depends on an injected test):
+# preserve the exact overlaid test file(s) under injected/<path> and record the
+# digest here. The loader verifies these before every evaluation.
+provenance: "controlled harness run URL / PR #N merge commit; redaction notes"
+go_version: "1.26"
+environment: {}
+injected_tests: []
+#  - path: path/in/repo/foo_test.go
+#    sha256: "REPLACE_WITH_64_HEX_CHAR_SHA256_OF_INJECTED_FILE"

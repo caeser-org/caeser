@@ -1,0 +1,67 @@
+{
+  "iteration": 4,
+  "kind": "independent validation (measurement only; no engine changes)",
+  "engine": {
+    "base_commit": "fb6edeb59dfedb44a15594904a14b4ee449d8565",
+    "evaluated_worktree_diff_sha256": "ada104456b712fe3d6758f21e9509c42684d611624070d9be4dcb9b16defd617",
+    "note": "Base = repository HEAD (pre-improvement). Evaluated = HEAD + iterations 2-3 (evidence-ordered candidate ranking, operation_support). Root-cause verification and promotion unchanged.",
+    "production_path": "cmd/caeser diagnose --repo <checkout> --ci-log <log> --artifact-first --json; tiers rebuilt via cmd/likely-bench --rebuild-candidate-report"
+  },
+  "datasets": {
+    "independent_holdout_unseen": {
+      "source": "eval/unseen-prep:evaluation/unseen/bundles (16 cases)",
+      "labels": "eval/unseen-prep:evaluation/unseen/cases/*/expected.yaml (independently reviewed)",
+      "repos": ["kyverno","mcp-go","minio-go","pomerium","node_exporter","tusd","vitess","micromdm","go-viper/mapstructure","1set/starlight","cli/cli","grpc-go"],
+      "repos_not_in_frozen_benchmark": 0,
+      "cases": 16
+    },
+    "independent_holdout_hy4": {
+      "source": "eval/hy4-go-holdout:evaluation/holdout-prep/artifacts/*/blind-report.json (11 cases)",
+      "labels": "eval/hy4-go-holdout:evaluation/holdout-prep/truth/corpus/cases/go-h4-*/expected.yaml (independently reviewed)",
+      "repos": ["mcp-go","mapstructure","pomerium","vitess","micromdm","node_exporter","kyverno","cli/cli","grpc-go","tusd","koanf"],
+      "repos_not_in_frozen_benchmark": 0,
+      "cases": 11
+    },
+    "external_corpus_new_repos": {
+      "source": "evaluation/corpus/cases/go-001..015 (15 cases, 8 repos)",
+      "repos": ["knadh/koanf","gin-gonic/gin","stretchr/testify","pelletier/go-toml","jackc/pgx","rs/zerolog","go-chi/chi","gorilla/mux"],
+      "repos_not_in_frozen_benchmark": 8,
+      "cases": 15,
+      "reproducibly_evaluated_offline_in_this_iteration": 0,
+      "reason": "Cases were produced by injecting comment-redacted regression test files from each PR onto the buggy base; those exact files are not preserved in the corpus, so engine source analysis cannot be reproduced faithfully offline. Recorded prior baseline exists (evaluation/results/go-return-mechanisms-01c93ff.json, engine 01c93ff) but is not the current engine."
+    }
+  },
+  "metrics_current_engine": {
+    "unseen": {"cases": 16, "coverage": 16, "primary_function_exact": 10, "primary_function_or_file": 12, "top3_function_or_file": 12, "top5_function_or_file": 13, "misleading_function": 6, "misleading_function_or_file": 4, "false_root_cause_verifications": 0, "abstentions": 0},
+    "hy4": {"cases": 11, "coverage": 11, "primary_function_exact": 5, "primary_function_or_file": 8, "top3_function_or_file": 8, "top5_function_or_file": 9, "misleading_function": 6, "misleading_function_or_file": 3, "false_root_cause_verifications": 0, "abstentions": 0}
+  },
+  "metrics_base_engine": {
+    "unseen": {"primary_function_exact": 7, "primary_function_or_file": 10, "top3_function_or_file": 11, "top5_function_or_file": 12, "misleading_function": 9, "misleading_function_or_file": 6},
+    "hy4": {"primary_function_exact": 3, "primary_function_or_file": 8, "top3_function_or_file": 8, "top5_function_or_file": 9, "misleading_function": 8, "misleading_function_or_file": 3}
+  },
+  "operation_support_current_engine": {
+    "unseen": {"evidence_supported": 12, "source_associated": 2, "requires_investigation": 2},
+    "hy4": {"evidence_supported": 8, "source_associated": 3}
+  },
+  "root_cause_status_sealed_reports": {
+    "unseen": {"localized": 11, "partially_established": 4, "unknown": 1, "established_or_confirmed": 0},
+    "hy4": {"localized": 7, "partially_established": 3, "unknown": 1, "established_or_confirmed": 0}
+  },
+  "cost": {
+    "full_diagnosis_seconds_unseen": {"mean": 10.75, "max": 30.17},
+    "full_diagnosis_seconds_hy4": {"mean": 14.11, "max": 34.60},
+    "corpus_prior_baseline_seconds": {"mean": 3.93, "max": 9.51},
+    "ranking_rebuild_seconds_16_cases": 0.15,
+    "indexing_scope_changed": false
+  },
+  "failure_mechanisms_incorrect": {
+    "admission_or_sibling_ambiguity": ["go-u003", "go-u013", "go-h4-01"],
+    "interface_fanout_ranking": ["go-u007", "go-h4-04"],
+    "panic_site_vs_deeper_helper": ["go-u010", "go-h4-13", "go-h4-14"],
+    "no_call_edges_shared_concurrency": ["go-u012", "go-h4-12"],
+    "indexing_scope": ["go-u004", "go-h4-03"],
+    "ambiguous_ground_truth": ["go-u015", "go-h4-03"]
+  },
+  "recommendation": "limited alpha",
+  "recommendation_reason": "No reproducibly-runnable new-repository evaluation set was obtainable offline, so true cross-repository generalization is unmeasured here. On two independently prepared holdouts the engine locates the culprit file in ~73-75% of cases and the exact function in ~45-63%, with a 27-38% function-level misleading rate, but 0 false root-cause verifications and consistently qualified uncertainty. Suitable as an investigation-location assistant under a limited alpha, not as a root-cause identifier or public beta."
+}

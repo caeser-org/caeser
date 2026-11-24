@@ -58,6 +58,21 @@ type Metadata struct {
 	LicenseNote  string   `yaml:"license_note"`
 	Redacted     bool     `yaml:"redacted"`
 	LogCachePath string   `yaml:"log_cache_path"`
+	// InjectedTests preserve the exact regression-test files that were overlaid
+	// onto the base revision to produce the failure. Each entry is a repo-relative
+	// path and the SHA-256 of the preserved copy under <case>/injected/. They make
+	// the failure reproducible without re-deriving or approximating the test.
+	InjectedTests []InjectedTest    `yaml:"injected_tests,omitempty"`
+	Provenance    string            `yaml:"provenance,omitempty"`
+	GoVersion     string            `yaml:"go_version,omitempty"`
+	Environment   map[string]string `yaml:"environment,omitempty"`
+}
+
+// InjectedTest is one preserved regression-test file. Path is repo-relative;
+// SHA256 is the digest of <case>/injected/<Path>.
+type InjectedTest struct {
+	Path   string `yaml:"path"`
+	SHA256 string `yaml:"sha256"`
 }
 
 type Expected struct {

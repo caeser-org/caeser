@@ -1,0 +1,65 @@
+{
+  "note": "Independent holdout cases. Each is a real merged bug-fix PR from a repository Ceaser was not tuned against: the base revision fails the injected regression test and the fixed head passes, with an independently reviewed culprit. Cases are VERIFIED in CI (base fails as a test failure, head passes) before being scored; exposed=false means not yet used to tune the engine. Do not fabricate.",
+  "cases": [
+    {
+      "id": "kong-651-value-error-panic",
+      "repo": "alecthomas/kong",
+      "base_sha": "0678fd30af8be8bae6dc9f9c6f143cc549450be2",
+      "head_sha": "bd34b5ff4d001c0666ac5413fe4269e2f5c95e18",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "callFunction",
+      "reviewed_culprit_file": "callbacks.go",
+      "injected_tests": [{ "path": "options_test.go", "sha256": "58eb15d3798b117cd2a1a0c25dd4b87f51dcd14117d14e249a94d7be1b01aed0" }],
+      "provenance": "alecthomas/kong#651 Fix provider panic on value-typed errors; reviewed from the callbacks.go fix hunk",
+      "exposed": false
+    },
+    {
+      "id": "kong-627-map-unmappable-panic",
+      "repo": "alecthomas/kong",
+      "base_sha": "17807cf88f46e49328edd09b801309b6bc40e234",
+      "head_sha": "598f0c8327c3f23cf35a1c4878b3bb9d1a72633d",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "mapDecoder",
+      "reviewed_culprit_file": "mapper.go",
+      "injected_tests": [{ "path": "kong_test.go", "sha256": "30d299a0c79accf3174b8d06c713ccb5afe6ea987bac48c32a0e87576f152892" }],
+      "provenance": "alecthomas/kong#627 return an error instead of panicking on an unmappable map key/value type; reviewed from the mapper.go fix hunk",
+      "exposed": false
+    },
+    {
+      "id": "kong-637-alias-leak",
+      "repo": "alecthomas/kong",
+      "base_sha": "a5c96268805994e92822673b24553196694fdda1",
+      "head_sha": "33d3305cb95c97b837c86b22040e4487bd3c55d9",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "buildNode",
+      "reviewed_culprit_file": "build.go",
+      "injected_tests": [{ "path": "kong_test.go", "sha256": "4dba448d2888ea375a6e6b34de982fc9cff31b73f9de3a03edc46dfa30376b5b" }],
+      "provenance": "alecthomas/kong#637 single-character alias leaking between sibling commands; reviewed from the build.go fix hunk",
+      "exposed": false
+    },
+    {
+      "id": "urfave-cli-2511-wrap-runes",
+      "repo": "urfave/cli",
+      "base_sha": "d854bb40d9441bd4bfba5eee6e33034d9e4f47e4",
+      "head_sha": "6d5074b689b7f3d06a3e800edbe580d9a8eeeb23",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "wrapLine",
+      "reviewed_culprit_file": "help.go",
+      "injected_tests": [{ "path": "help_test.go", "sha256": "22f8750a586b5aa3ed8ab52bb0062fdd9668583ebd173fe9b5280cc5821edde5" }],
+      "provenance": "urfave/cli#2511 count runes, not bytes, when wrapping help text; reviewed from the help.go fix hunk",
+      "exposed": false
+    },
+    {
+      "id": "cobra-2356-completions-args-mutation",
+      "repo": "spf13/cobra",
+      "base_sha": "f2878bab8c96afd6e36968af96343b35dbb82a82",
+      "head_sha": "746ef07158728502482cea9f880a6f4b21ef29a9",
+      "command": "go test ./...",
+      "reviewed_culprit_function": "getCompletions",
+      "reviewed_culprit_file": "completions.go",
+      "injected_tests": [{ "path": "completions_test.go", "sha256": "3f8a8aabe2d279b84313fbfa08a08728008a8bc61744ab3522e7cee73b3faba9" }],
+      "provenance": "spf13/cobra#2356 prevent completions from mutating os.Args via append side effect; reviewed from the completions.go fix hunk",
+      "exposed": false
+    }
+  ]
+}

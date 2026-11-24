@@ -37,16 +37,27 @@ type lead struct {
 }
 
 type caseResult struct {
-	Case           string `json:"case"`
-	Status         string `json:"status"`
-	Primary        *lead  `json:"primary,omitempty"`
-	Alternates     []lead `json:"alternates,omitempty"`
-	Entries        []lead `json:"entries,omitempty"`
-	EntryCount     int    `json:"entry_count"`
-	ImplEntries    int    `json:"impl_entries"`
-	ObservedLoc    int    `json:"observed_locations"`
-	SSAStatus      string `json:"ssa_status"`
-	Classification string `json:"classification"`
+	Case           string        `json:"case"`
+	Status         string        `json:"status"`
+	Primary        *lead         `json:"primary,omitempty"`
+	Alternates     []lead        `json:"alternates,omitempty"`
+	Entries        []lead        `json:"entries,omitempty"`
+	EntryCount     int           `json:"entry_count"`
+	ImplEntries    int           `json:"impl_entries"`
+	ObservedLoc    int           `json:"observed_locations"`
+	SSAStatus      string        `json:"ssa_status"`
+	Classification string        `json:"classification"`
+	Causal         *causalResult `json:"causal_explanation,omitempty"`
+}
+
+type causalResult struct {
+	Status           string                         `json:"status"`
+	Observed         string                         `json:"observed,omitempty"`
+	Suspect          string                         `json:"suspect,omitempty"`
+	OperationSupport string                         `json:"operation_support,omitempty"`
+	Hypothesis       string                         `json:"hypothesis,omitempty"`
+	Unresolved       string                         `json:"unresolved,omitempty"`
+	Checks           []diagnosis.InvestigationCheck `json:"checks,omitempty"`
 }
 
 func main() {
@@ -106,6 +117,10 @@ func main() {
 		for _, a := range lf.Alternates {
 			res.Alternates = append(res.Alternates, *toLead(a))
 		}
+		rep.LikelyFunction = &lf
+		exp := diagnosis.BuildCausalExplanation(rep)
+		res.Causal = &causalResult{Status: exp.Status, Observed: exp.Observed, Suspect: exp.Suspect,
+			OperationSupport: exp.OperationSupport, Hypothesis: exp.Hypothesis, Unresolved: exp.Unresolved, Checks: exp.Checks}
 		results = append(results, res)
 	}
 

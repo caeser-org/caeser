@@ -1,18 +1,30 @@
 # Caeser
 
-### CI failure diagnosis, starting with Go
+### Open-source Go CI failure investigator (v0.1.2)
 
-Caeser reads failed CI runs and updates one comment on the pull request.
-See the failing test, the reported error, and the source locations worth
-inspecting. Expand the evidence or download a brief when you need more context.
+Caeser reads a failed CI run, traces the failure through the checked-out source,
+and updates one comment on the pull request with the failure, the evidence, and
+the most defensible functions to inspect. It separates what the failure
+**observed** from what static and runtime evidence merely **suggests**, and it
+does not claim a verified root cause unless the existing stringent verification
+gates are satisfied.
 
-**Current adapter: Go, alpha.** Additional language adapters are planned.
-The existing cross-language parsers and environment detection are foundations
-for that work. They have not received the same end-to-end validation as Go.
+> **Read this before relying on it.** Caeser is an investigation aid, not
+> a root-cause oracle. On six development-exposed cases it named the correct
+> function 6/6 times. The first five curated regressions originally scored 1/5;
+> those five are now development-exposed and score 3/5 after tuning. A later
+> ten-case batch scored **3/10 (30%) exact function** on its first evaluation,
+> but that batch has since been exposed by model selection, so there is
+> currently **no clean independent number**.
+> Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
+> auto-merge, auto-revert, or assign blame.
 
-[Install locally](#try-it-locally) · [Connect GitHub Actions](#add-it-to-github-actions) ·
-[Architecture](#architecture) · [Sandbox execution](docs/sandbox-execution.md) ·
-[Read the reports](#read-or-share-the-detailed-report) · [Contribute](#contributing)
+**Go only.** Other adapters are foundations, not validated features.
+
+[Quickstart](#try-it-locally) · [GitHub Actions](#add-it-to-github-actions) ·
+[How it works](#why-the-engine-is-structured-this-way) ·
+[Capabilities & limits](docs/capabilities.md) ·
+[Contribute](#contributing)
 
 ## What you get
 
@@ -42,11 +54,11 @@ not silently become an answer to another.
 | Independent report export | A useful investigation brief can be generated and shared without a model call. |
 
 Measured localization and verification results are listed under
-[validation](#status), with links to the reports and their limits.
+[validation](#status).
 
 ## Try it locally
 
-Linux x86_64 users can [install the v9.1 binary](docs/installation.md#install-a-released-binary).
+Linux x86_64 users can [install the v0.1.2 binary](docs/installation.md#install-a-released-binary).
 To build locally, you need Go 1.26, Git, and a C compiler for SQLite. Docker is
 needed only when you choose the Docker executor:
 
@@ -111,7 +123,7 @@ jobs:
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v9.1
+    uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.2
     with:
       run_id: ${{ github.event.workflow_run.id }}
       head_sha: ${{ github.event.workflow_run.head_sha }}
@@ -120,7 +132,7 @@ jobs:
 
 </details>
 
-**v9.1 uses a prebuilt, checksum-verified binary.** Caeser is built once per release,
+**v0.1.2 uses a prebuilt, checksum-verified binary.** Caeser is built once per release,
 not once per diagnosis. Target tests may still need their own compilation.
 GitHub-hosted runners are supported; Blacksmith is not required.
 
@@ -129,14 +141,14 @@ Caeser updates its existing comment on later failures. It puts the report and
 supporting logs in a workflow artifact. Use `comment_detail: detailed` to show
 the evidence section by default, or `comment: false` to publish only the workflow
 summary and artifact. For reproducible installs, pin the reusable workflow
-reference to a full commit SHA. The binary defaults to `caeser_version: v9.1`;
+reference to a full commit SHA. The binary defaults to `caeser_version: v0.1.2`;
 `main` opts into development source builds. See [integration options](docs/ci-integration.md).
 
 For a custom job, use the setup action:
 
 ```yaml
 steps:
-  - uses: caeser-org/ceaser@v9.1
+  - uses: caeser-org/ceaser@v0.1.2
   - run: caeser version
 ```
 
@@ -205,40 +217,42 @@ On the [Caeser smoke PR](https://github.com/caeser-org/ceaser/pull/25#issuecomme
 the test expected `"ready"` and got `"pending"`. The assertion line was the
 useful location. There was no application call to investigate.
 
-## Status
+## Status (v0.1.2)
 
-Caeser is a Go-first alpha. It separates observed failures, inferred code leads,
-and verified mechanisms. Stack locations and likely files can narrow the search.
-They cannot establish that the PR caused a failure. Runtime probes and verified
-mechanism checks are experimental.
+Caeser is a **Go-only release**. It produces investigation leads, not
+verified root causes. It keeps four things separate: the observed failure, the
+observed execution location, inferred causal hypotheses, and a verified
+mechanism (which requires the existing stringent runtime gates).
 
-The v9 line adds a structured `likely_function` tier for developers and assistants. It
-names a primary suspect and up to three alternates, each with a file, function,
-line when available, a reason, a provenance kind, a confidence label, and
-evidence IDs. Observed stack locations remain distinct from inferred source
-relationships and probe operations. Ranked suspects are investigation leads,
-not verified root causes. Leads are ordered by evidence: functions on the
-failed assertion's operand dependency path are promoted, and observed stack
-frames are ordered ahead of framework and runtime frames. The failing test file
-is never a lead. The operand path includes the call whose result the assertion
-consumes, so the function that produced the value can be named even when it does
-not appear in the failure stack.
+What the engine computes today:
 
-v9.1 is a patch release on that line. It fixes a localization crash when a
-stack frame matched only a whole-file node, with no enclosing symbol. Install
-defaults now use v9.1. Localization and verification results are unchanged;
-see the [v9.1 notes](docs/releases/v9.1.md).
+- A ranked `likely_function` tier: primary suspect plus alternates, each with
+  file, function, line, reason, provenance kind, confidence, and evidence IDs.
+- A backward `causal_trace` from the failure through value provenance, local
+  assignments, caller arguments, and observed stack frames.
+- `defect_origin` hypotheses (`later_assignment`, `ignored_error`,
+  `missing_guard`, `boundary_guard`) tied to the failing operand; all are
+  explicitly inferred, none are promoted to a root cause.
+- Base/head delta correlation and assertion-anchored traces where evidence
+  exists; unverified paths are reported as boundaries rather than guessed.
 
-On 14 reviewed cases that ran their intended tests, Caeser included the culprit
-file in its first five candidates in 10 cases. The first five raw log locations
-included it in 7. The lists had different lengths, and the comparison used a
-small development set. The later 16-case probe run verified zero mechanisms.
-On the same sealed cases, the v9 ranking change improved likely-function top-1
-localization from 5/16 to 6/16. A controlled public case with probing disabled
-reported `mcp/tools.go:255 GetInt` from an SSA dependency value. See the
-[file comparison](evaluation/go-probe-preflight.md),
-[probe results](evaluation/probe-rerun/README.md), and
-[v9 release notes](docs/releases/v9.md).
+**Measured, not assumed:**
+
+- **Six paired development cases** (used while building the engine): 6/6
+  exact-function with tracing enabled vs 5/6 disabled, no regressions. This is
+  *function localization*, not verified diagnosis.
+- **First five verified regressions**: originally 1/5 exact-function. These are
+  now development-exposed and score 3/5 after tuning, so they are not an
+  independent rate.
+- **Ten-case batch**: scored 3/10 with one abstention on its first evaluation,
+  then used to accept or reject two engine changes. It is now development-exposed
+  and is not an independent number.
+
+There is currently no clean independent measurement. There is no claim that
+Caeser identifies a defect-introducing change reliably on unfamiliar code.
+Runtime probes and verified-mechanism checks remain narrow and experimental. See
+[capabilities and limitations](docs/capabilities.md) and the
+[v0.1.2 notes](docs/releases/v0.1.2.md).
 
 ## Architecture
 
@@ -291,11 +305,9 @@ selected functions and failing assertions.
 Localized implementation candidates feed operation selection, including when
 backward assertion tracing is incomplete. Source fallbacks use implementation
 stack frames or executed coverage ranges. SSA and source candidates share the
-bounded probe shortlist. In the v9 line, when neither supplies an operation,
-explicit runtime probing can test returns in exact localized implementation
-functions as hypotheses. That fallback rotates between functions and records
-its selection reason; it does not confer static dataflow proof. Missing type
-information or unsupported operations can still leave only a file/function lead.
+bounded probe shortlist. When neither supplies an operation, explicit runtime
+probing can test returns in exact localized implementation functions as
+hypotheses.
 
 The report keeps three distinctions visible:
 
@@ -425,7 +437,7 @@ Neither service is required for the default PR-report integration. See the
 
 | Adapter | Availability |
 | --- | --- |
-| **Go** | Available in this alpha. Go test output, assertion and panic locations, source relationships, and race evidence. |
+| **Go** | Available in v0.1.2. Go test output, assertion and panic locations, source relationships, and race evidence. |
 | JavaScript / TypeScript | Planned. Existing environment detection and report parsing need runner-specific validation. |
 | Python | Planned. Existing traceback parsing and environment detection provide a starting point. |
 | Java / Kotlin | Planned. Existing JUnit and exception parsing provide a starting point. |
@@ -469,6 +481,7 @@ go build ./...
 
 | Reference | Contents |
 | --- | --- |
+| [Documentation hub](docs/README.md) | Website-ready docs index: start-here paths, core concepts, pipeline, commands, configuration, outputs and safety |
 | [Installation](docs/installation.md) | Source builds, released binaries, and common setup failures |
 | [CI integration](docs/ci-integration.md) | Workflow inputs, permissions, and execution options |
 | [GitHub Action](docs/github-action.md) | Setup action, custom jobs, release installation and Marketplace |

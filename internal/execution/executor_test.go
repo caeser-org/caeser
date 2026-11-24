@@ -211,7 +211,30 @@ func TestLocalExecutorTerminatesChildProcessGroup(t *testing.T) {
 		t.Fatalf("parse child pid: %v", parseErr)
 	}
 	if err := syscall.Kill(pid, 0); err == nil && processIsAlive(pid) {
-		t.Fatalf("child process %d survived process-group cleanup", pid)
+		// Bounded wait: SIGKILL is delivered to the group, but the target may
+		// still be scheduling or becoming a zombie when Run returns.
+		waitForTermination(t, pid, 3*time.Second)
+	}
+}
+
+// waitForTermination polls until the process is gone or a zombie, bounded.
+// SIGKILL is delivered to the process group, but the target may still be
+// scheduling or becoming a zombie when Run returns; a bounded wait removes the
+// race without weakening the assertion.
+func waitForTermination(t *testing.T, pid int, within time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(within)
+	for {
+		if !processIsAlive(pid) {
+			return
+		}
+		if syscall.Kill(pid, 0) != nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("child process %d survived process-group cleanup", pid)
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
 

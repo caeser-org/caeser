@@ -69,6 +69,14 @@ func BuildLikelyFunction(report Report) LikelyFunction {
 		if key != "" {
 			present[key] = true
 		}
+		// A causal-dependency lead is already ranked by its depth in the
+		// source-verified chain (candidate report order). Letting the SSA
+		// operand distance override that order would promote the value's
+		// manifestation over its origin, so keep the chain order for these
+		// entries and use SSA only to enrich the reason.
+		if e.Kind == "causal_dependency" || e.Kind == "assertion_mention" {
+			isCorr = false
+		}
 		items = append(items, rankedEntry{
 			entry:     e,
 			corr:      isCorr,
@@ -77,6 +85,17 @@ func BuildLikelyFunction(report Report) LikelyFunction {
 			framework: isFrameworkFrame(e.File, e.Function),
 			index:     i,
 		})
+	}
+
+	// A function already in the candidate tier is never re-injected from SSA
+	// with a competing rank. A second copy would let the operand distance
+	// override the evidence-grounded order and surface a function the engine
+	// had already considered and ranked lower.
+	for _, candidate := range report.Candidates {
+		name := candidateFunction(candidate.Location.SymbolIdentity)
+		if name != "" {
+			present[fileFunctionKey(candidate.Location.FilePath, name)] = true
+		}
 	}
 
 	// Promote operand-correlated dependency functions that the candidate tier
@@ -206,7 +225,7 @@ func BuildLikelyFunction(report Report) LikelyFunction {
 
 func leadConfidence(entry CandidateReportEntry) string {
 	switch entry.Kind {
-	case "observed_stack", "probe_operation":
+	case "observed_stack", "probe_operation", "causal_producer", "causal_dependency", "assertion_mention":
 		return "medium"
 	case "inferred_call":
 		if strings.Contains(entry.Reason, "resolved") || strings.Contains(entry.Reason, "value") {
@@ -416,7 +435,7 @@ func likelyFunctionEntry(entry CandidateReportEntry) bool {
 		return false
 	}
 	switch entry.Kind {
-	case "observed_stack", "inferred_call", "inferred_source", "probe_operation":
+	case "observed_stack", "inferred_call", "inferred_source", "probe_operation", "causal_producer", "causal_dependency", "assertion_mention":
 		return true
 	default:
 		return false
@@ -427,4 +446,17 @@ func likelyFunctionEntry(entry CandidateReportEntry) bool {
 // function label from a CodeLocation without materializing the full tier.
 func candidateFunctionFromLocation(loc domain.CodeLocation) string {
 	return candidateFunction(loc.SymbolIdentity)
+}
+
+// applyLikelyFunction builds the presentation-only candidate, likely-function
+// and causal-explanation tiers. It is derived from existing report fields and
+// cannot change classification, evidence, root-cause status, confidence,
+// verification, or abstention.
+func applyLikelyFunction(report *Report) {
+	shortlist := BuildCandidateReport(*report)
+	report.CandidateReport = &shortlist
+	likely := BuildLikelyFunction(*report)
+	report.LikelyFunction = &likely
+	explanation := BuildCausalExplanation(*report)
+	report.CausalExplanation = &explanation
 }

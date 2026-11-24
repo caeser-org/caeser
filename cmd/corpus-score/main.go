@@ -16,7 +16,17 @@ import (
 func main() {
 	root := flag.String("corpus", "evaluation/corpus", "corpus directory")
 	index := flag.String("reports", "", "JSON map from case ID to saved report path")
+	verify := flag.Bool("verify", false, "verify fixture integrity and exit")
 	flag.Parse()
+	if *verify {
+		count, err := evalcorpus.VerifyCorpus(*root)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "fixture verification failed:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("verified %d cases\n", count)
+		return
+	}
 	if err := run(*root, *index); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

@@ -9,7 +9,7 @@ name: Caeser Diagnose
 #         actions: read
 #         contents: read
 #         pull-requests: write
-#       uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v9.1
+#       uses: caeser-org/ceaser/.github/workflows/ci-diagnose.yml@v0.1.2
 #       with:
 #         run_id: ${{ github.event.workflow_run.id }}
 #         head_sha: ${{ github.event.workflow_run.head_sha }}
@@ -80,7 +80,7 @@ on:
         description: Prebuilt release tag or latest; use main only for development source builds
         type: string
         required: false
-        default: v9.1
+        default: v0.1.2
       caeser_repository:
         description: Repository that publishes Caeser releases
         type: string
@@ -588,13 +588,18 @@ jobs:
           }
           artifact_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           next_actions="$(jq -r '[(.root_cause.next_actions // [])[0:3][] | "- " + .] | join("\n")' "$report")"
+          causal_hypothesis="$(jq -r '.causal_explanation.hypothesis // empty' "$report")"
+          causal_support="$(jq -r '.causal_explanation.operation_support // empty' "$report")"
+          causal_unresolved="$(jq -r '.causal_explanation.unresolved // empty' "$report")"
+          causal_checks="$(jq -r '[(.causal_explanation.checks // [])[0:3][] | "- Inspect " + (.target // "") + "\n  evidence: " + (.evidence_needed // "") + "\n  confirms if " + (.confirms_if // "") + "; rejects if " + (.rejects_if // "")] | join("\n")' "$report")"
           details="$(jq -r '
             def bullet($values): if ($values | length) > 0 then $values | join("\n") else empty end;
             ["Classification: " + (.classification // "unknown"),
               (if (.command | type) == "array" and (.command | length) > 0 then "Command: " + (.command | join(" ")) else empty end),
-              ((.failure_incidents // [])[:2][]? | .observed_explanation // empty),
+              (([(.failure_incidents // [])[]?.observed_explanation // empty] | unique)[]),
               (if .comparison then "Base/head: base " + ((.comparison.base.passes // 0)|tostring) + "/" + ((.comparison.base.attempts // 0)|tostring) + " base attempts passed; head " + ((.comparison.head.failures // 0)|tostring) + "/" + ((.comparison.head.attempts // 0)|tostring) + " failed." else empty end),
               ((.findings // [])[:2][]? | .statement // empty),
+              ((.causal_trace.defect_origins // [])[:2][]? | "Defect hypothesis (" + (.kind // "?") + "): " + (.rationale // "")),
               (if .reproduction_status == "deferred" then "Reproduction: deferred; analyzed existing CI evidence." else empty end),
               (if ((.root_cause.evidence_ids // []) | length) > 0 then "Evidence: " + ((.root_cause.evidence_ids[:5]) | join(", ")) else empty end),
               ((.likely_function.primary.evidence_ids // [])[:4][]? | "Primary evidence: " + .),
@@ -618,6 +623,17 @@ jobs:
               elif .kind == "inferred_call" then "A resolved call relationship connects this function to the failure."
               elif .kind == "probe_operation" then "A bounded runtime probe selected this operation."
               else (.reason // "Ranked investigation lead.") end;
+            def triagephrase:
+              if .classification == "real_regression" then "real regression — fails here and passed on base"
+              elif .classification == "pre_existing_failure" then "pre-existing — also fails on base"
+              elif .classification == "flaky" then "flaky — mixed pass/fail outcomes"
+              elif .classification == "dependency_or_toolchain_drift" then "dependency or toolchain drift"
+              elif .classification == "infrastructure_or_environment" then "environment or infrastructure fault"
+              elif .classification == "inconclusive" then "inconclusive"
+              elif .classification == "not_reproduced" then "not reproduced"
+              elif .classification == "test_failure_observed" then "observed test failure"
+              elif .classification == "lint_failure_observed" then "observed lint failure"
+              else (.classification // "unknown") end;
             .likely_function.primary as $p |
             .likely_function.alternates as $alt |
             "## Caeser diagnosis\n\n" +
@@ -634,13 +650,15 @@ jobs:
               (if ($subs|length)>0 then ("\n" + ([ $subs[] | "- " + (.name | split("/")[1]) ] | join("\n"))) else "" end) +
               (([ $subs[]?.message | select(length>0) ] | unique | .[0]) as $m | if $m then ("\n" + $m) else "" end))) +
             "</pre>\n\n" +
+            "**Triage**: " + triagephrase +
+              (if .comparison then " · base " + ((.comparison.base.failures // 0)|tostring) + "/" + ((.comparison.base.attempts // 0)|tostring) + ", head " + ((.comparison.head.failures // 0)|tostring) + "/" + ((.comparison.head.attempts // 0)|tostring) else "" end) + "\n\n" +
             (if $p == null then
               "**Primary suspect**\n\nNo implementation lead was admitted; see the investigation brief.\n\n"
             else
               "**Primary suspect**\n\n" +
               "**" + ($p.function // "unknown") + "** — " + ($p | provphrase) + "\n\n" +
               "`" + ($p.file // "unknown") + ":" + (($p.line // 0)|tostring) + "`\n\n" +
-              ($p | reasonphrase) + "\n\n" +
+              (if ((.causal_explanation.hypothesis // "") == "") then ($p | reasonphrase) + "\n\n" else "" end) +
               (if $p.kind != "observed_stack" then "Identified beyond the observed stack\n\n" else "" end) +
               (($p.confidence // "low") | ascii_upcase | .[0:1] + (.[1:] | ascii_downcase)) + " confidence · Causal mechanism not verified\n\n"
             end) +
@@ -652,7 +670,18 @@ jobs:
           ' "$report")"
           {
             printf '%s\n' "$diagnosis_body"
-            if [ -n "$next_actions" ]; then
+            if [ -n "$causal_hypothesis" ]; then
+              printf '\n**Why this is the suspect**\n\n%s\n' "$(plain "$causal_hypothesis")"
+            fi
+            if [ -n "$causal_support" ]; then
+              printf '\nEvidence support: `%s`\n' "$(plain "$causal_support")"
+            fi
+            if [ -n "$causal_unresolved" ]; then
+              printf '\n**Still unverified**\n\n%s\n' "$(plain "$causal_unresolved")"
+            fi
+            if [ -n "$causal_checks" ]; then
+              printf '\n**What to investigate**\n\n<pre>%s</pre>\n' "$(plain "$causal_checks")"
+            elif [ -n "$next_actions" ]; then
               printf '\n**What to investigate**\n\n<pre>%s</pre>\n' "$(plain "$next_actions")"
             fi
             printf '\n[View the workflow run and download the investigation brief](%s)\n' "$artifact_url"

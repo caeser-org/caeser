@@ -40,6 +40,9 @@ func Load(root string) (Manifest, []Case, error) {
 		if err != nil {
 			return Manifest{}, nil, fmt.Errorf("case %s failure log: %w", entry.ID, err)
 		}
+		if err := VerifyFixture(dir, metadata); err != nil {
+			return Manifest{}, nil, fmt.Errorf("case %s fixture: %w", entry.ID, err)
+		}
 		cases = append(cases, Case{Dir: dir, Metadata: metadata, Input: RunnerInput{FailureLog: log, Metadata: metadata}})
 	}
 	return manifest, cases, nil

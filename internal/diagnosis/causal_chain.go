@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -194,6 +195,216 @@ func buildDeterministicCausalChain(report *Report, workspace string, snapshot pr
 		break
 	}
 	report.CausalChain = chain
+	admitCausalChainCandidates(report, snapshot)
+	admitAssertionMentionedCandidates(report, snapshot)
+}
+
+// identifierPattern extracts Go identifiers from retrieved source excerpts.
+var identifierPattern = regexp.MustCompile(`[A-Za-z_][A-Za-z0-9_]{3,}`)
+
+// admitAssertionMentionedCandidates admits implementation functions that the
+// failing test's own source names at the assertion. A test comment or expression
+// naming a function is retrieved source evidence, not speculation: the report
+// cites the evidence ID, and the function must still exist as an indexed,
+// non-test symbol in the checked-out revision.
+func admitAssertionMentionedCandidates(report *Report, snapshot programrepo.Snapshot) {
+	if report == nil {
+		return
+	}
+	byShortName := map[string][]domain.ProgramNode{}
+	for _, node := range snapshot.Nodes {
+		if node.Type != "Function" && node.Type != "Method" {
+			continue
+		}
+		if strings.HasSuffix(node.FilePath, "_test.go") || strings.Contains(node.FilePath, "/testdata/") {
+			continue
+		}
+		name := candidateFunction(node.Identity)
+		if i := strings.LastIndex(name, "."); i >= 0 {
+			name = name[i+1:]
+		}
+		if len(name) < 5 || isCommonIdentifier(name) {
+			continue
+		}
+		byShortName[name] = append(byShortName[name], node)
+	}
+	evidenceByName := map[string][]string{}
+	for _, ev := range report.Evidence {
+		if ev.Kind != "source_excerpt" || !strings.HasSuffix(ev.Source, "_test.go") {
+			continue
+		}
+		// Only comment lines that explicitly describe a cause name a suspect.
+		// Ordinary test code and descriptive comments mention many functions
+		// that have nothing to do with the failure, so admitting them would be
+		// noisier than the evidence is worth.
+		for _, line := range strings.Split(ev.Detail, "\n") {
+			if !strings.Contains(line, "//") || !hasCausalPhrase(line) {
+				continue
+			}
+			for _, id := range identifierPattern.FindAllString(line, -1) {
+				evidenceByName[id] = appendUniqueString(evidenceByName[id], ev.ID)
+			}
+		}
+	}
+	names := make([]string, 0, len(byShortName))
+	for name := range byShortName {
+		if len(evidenceByName[name]) > 0 {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		nodes := byShortName[name]
+		sort.Slice(nodes, func(i, j int) bool {
+			if nodes[i].FilePath != nodes[j].FilePath {
+				return nodes[i].FilePath < nodes[j].FilePath
+			}
+			return nodes[i].Identity < nodes[j].Identity
+		})
+		node := nodes[0]
+		identity := node.Identity
+		ids := evidenceByName[name]
+		duplicate := false
+		for _, existing := range report.Candidates {
+			if existing.Location.SymbolIdentity == identity {
+				duplicate = true
+				break
+			}
+		}
+		if duplicate {
+			continue
+		}
+		report.Candidates = append(report.Candidates, domain.CandidateLocation{
+			ID: "candidate:assertion-mention:" + digestString(identity),
+			Location: domain.CodeLocation{
+				ID:           "location:assertion-mention:" + digestString(identity),
+				RepositoryID: node.RepositoryID, RevisionID: node.RevisionID,
+				FilePath: node.FilePath, SymbolIdentity: identity,
+				StartLine: node.StartLine, EndLine: node.EndLine, LocationType: node.Type,
+				Provenance: "assertion_mention",
+			},
+			Score: domain.ScoreVector{
+				DependencyRelevance: 0.7, AvailableDimensions: []string{"dependency"},
+				EvidenceByDimension:  map[string][]domain.ID{"dependency": stringIDsToDomain(ids)},
+				ScoringPolicyVersion: "vector-v1",
+			},
+			SupportingEvidenceIDs: stringIDsToDomain(ids),
+			Status:                "open",
+		})
+	}
+}
+
+func hasCausalPhrase(line string) bool {
+	lower := strings.ToLower(line)
+	for _, phrase := range []string{"because", "bug:", "bug ", "caused by", "the fix", "without the fix", "regression"} {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+	return false
+}
+
+func isCommonIdentifier(name string) bool {
+	switch name {
+	case "assert", "require", "check", "error", "value", "result", "expect", "actual", "output", "input":
+		return true
+	}
+	return false
+}
+
+// admitCausalChainCandidates admits the functions named by the chain's
+// assertion-dependency and implementation-branch steps as investigation
+// candidates. Those steps are source-verified operations on the failed
+// assertion's dependency path; dropping them at admission loses the strongest
+// source-level lead the engine has.
+//
+// Assertion-dependency steps form a path from the failing assertion toward the
+// value's origin, so a later step is closer to the origin. Their score grows
+// with depth. Implementation-branch steps are a flat set of verified callees,
+// so they receive a lower fixed score. This is ranking of existing evidence,
+// not a new analysis or a causal conclusion.
+func admitCausalChainCandidates(report *Report, snapshot programrepo.Snapshot) {
+	chain := report.CausalChain
+	if chain == nil {
+		return
+	}
+	nodesByIdentity := map[string]domain.ProgramNode{}
+	for _, node := range snapshot.Nodes {
+		if node.Type == "Function" || node.Type == "Method" {
+			nodesByIdentity[node.Identity] = node
+		}
+	}
+	type admitted struct {
+		node  domain.ProgramNode
+		score float64
+		ids   []string
+	}
+	byIdentity := map[string]admitted{}
+	depIndex := 0
+	for _, step := range chain.Steps {
+		if step.Kind != "assertion_dependency" && step.Kind != "implementation_branch" {
+			continue
+		}
+		fields := strings.Fields(step.Statement)
+		if len(fields) == 0 || !strings.HasPrefix(fields[0], "go:") {
+			continue
+		}
+		identity := fields[0]
+		node, ok := nodesByIdentity[identity]
+		if !ok || strings.HasSuffix(node.FilePath, "_test.go") {
+			continue
+		}
+		score := 0.5
+		if step.Kind == "assertion_dependency" {
+			score = 0.55 + 0.05*float64(depIndex)
+			if score > 0.95 {
+				score = 0.95
+			}
+			depIndex++
+		}
+		ids := []string{}
+		if step.EvidenceID != "" {
+			ids = append(ids, step.EvidenceID)
+		}
+		if prev, exists := byIdentity[identity]; !exists || score > prev.score {
+			byIdentity[identity] = admitted{node: node, score: score, ids: ids}
+		}
+	}
+	identities := make([]string, 0, len(byIdentity))
+	for identity := range byIdentity {
+		identities = append(identities, identity)
+	}
+	sort.Strings(identities)
+	for _, identity := range identities {
+		item := byIdentity[identity]
+		duplicate := false
+		for _, existing := range report.Candidates {
+			if existing.Location.SymbolIdentity == identity {
+				duplicate = true
+				break
+			}
+		}
+		if duplicate {
+			continue
+		}
+		report.Candidates = append(report.Candidates, domain.CandidateLocation{
+			ID: "candidate:causal-chain:" + digestString(identity),
+			Location: domain.CodeLocation{
+				ID:           "location:causal-chain:" + digestString(identity),
+				RepositoryID: item.node.RepositoryID, RevisionID: item.node.RevisionID,
+				FilePath: item.node.FilePath, SymbolIdentity: identity,
+				StartLine: item.node.StartLine, EndLine: item.node.EndLine, LocationType: item.node.Type,
+				Provenance: "causal_dependency",
+			},
+			Score: domain.ScoreVector{
+				DependencyRelevance: item.score, AvailableDimensions: []string{"dependency"},
+				EvidenceByDimension:  map[string][]domain.ID{"dependency": stringIDsToDomain(item.ids)},
+				ScoringPolicyVersion: "vector-v1",
+			},
+			SupportingEvidenceIDs: stringIDsToDomain(item.ids),
+			Status:                "open",
+		})
+	}
 }
 
 // testNameFromIdentifier tolerates subtests ("TestFoo/1e1000") and Go package
@@ -250,8 +461,8 @@ func calledSymbolsFromSource(workspace, relPath string) []string {
 	return names
 }
 
-// valueBranchLine finds a return statement in the named Go function — the
-// generic shape of a value-producing branch — and returns its line.
+// valueBranchLine finds a return statement in the named Go function, the
+// generic shape of a value-producing branch, and returns its line.
 func valueBranchLine(workspace, relPath, funcName string) (int, bool) {
 	data, err := os.ReadFile(filepath.Join(workspace, filepath.FromSlash(relPath)))
 	if err != nil {
