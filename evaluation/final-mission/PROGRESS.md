@@ -3,7 +3,7 @@
 ## Session 2026-11-22 (final)
 - Baseline: branch `main`, HEAD `fb6edeb`, go1.26.2, disk free 1.7 Gi, `go test ./...` PASS.
 - Created `PLAN.md`, `EVIDENCE-MAP.md`, this file, `RESULTS.md`, `LIMITATIONS.md`.
-- Audit confirmed the historical summary in `prompt.md` §1 matches the checkout.
+- Audit confirmed the historical summary in the mission spec (`prompt.md`, since removed) §1 matches the checkout.
 - Implemented **Phase A** (control-flow/type-aware defect feasibility) and **Phase B**
   (base/head delta correlation) in `internal/diagnosis/defect_origin.go`.
 - Added negative controls (`defect_origin_test.go`).

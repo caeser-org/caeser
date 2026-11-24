@@ -1,6 +1,6 @@
 # Ceaser final mission: PLAN
 
-Mission spec: `prompt.md` (repo root). North star: identify the most defensible
+Mission spec: `prompt.md` (formerly at repo root, removed during repository cleanup). North star: identify the most defensible
 **defect-origin operation/mechanism**, explain causation, differentiate
 alternatives, verify when evidence supports it, else abstain.
 

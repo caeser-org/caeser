@@ -116,7 +116,6 @@ actually find, not just the title.
 | [v0.1.2](releases/v0.1.2.md) | Wires the frozen independent batch into evaluation; engine unchanged; states the 3/10 signal. |
 | [Changelog](../CHANGELOG.md) | Chronological user-facing changes. |
 | [Contributing](../CONTRIBUTING.md) | Setup, where to make changes, fixture guidelines, and how to write a useful bug report or PR. |
-| [Mission specification](../prompt.md) | The persistent engineering mission, its hard invariants and operating protocol. Read before changing engine behavior. |
 
 ---
 
@@ -432,9 +431,9 @@ verified cause.
 ## Contributing and maintaining these docs
 
 - Code and fixture changes follow [CONTRIBUTING.md](../CONTRIBUTING.md).
-- Engine changes follow the hard invariants in [prompt.md](../prompt.md): reuse
-  the production engine, preserve verification gates, keep evidence
-  provenance, and never promote a hypothesis to a root cause without proof.
+- Engine changes preserve the hard invariants: reuse the production engine,
+  keep verification gates, keep evidence provenance, and never promote a
+  hypothesis to a root cause without proof.
 - Keep the persistent evaluation record current:
   [PLAN](../evaluation/final-mission/PLAN.md),
   [PROGRESS](../evaluation/final-mission/PROGRESS.md),
