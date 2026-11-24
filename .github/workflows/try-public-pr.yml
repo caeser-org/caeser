@@ -104,6 +104,11 @@ on:
         required: false
         default: false
         type: boolean
+      agent_code_retrieval:
+        description: Let Gemini request bounded source snippets from the failing revision
+        required: false
+        default: false
+        type: boolean
       gemini_model:
         description: Gemini model used by the local Caeser gateway when agent is enabled
         required: false
@@ -395,8 +400,6 @@ jobs:
           CAESER_CI_SOURCE_URL: ${{ steps.evidence.outputs.source_url }}
           EVIDENCE_BOUNDED_LOG_PATH: ${{ steps.evidence.outputs.bounded_log_path }}
           EVIDENCE_ARTIFACT_DIR: ${{ steps.evidence.outputs.artifact_dir }}
-          CAESER_GATEWAY_ENDPOINT: http://127.0.0.1:8787
-          CAESER_GATEWAY_MODEL: ${{ inputs.gemini_model }}
         run: |
           set -euo pipefail
           if [[ ! "$CAESER_ATTEMPTS" =~ ^[1-5]$ ]]; then
@@ -457,19 +460,32 @@ jobs:
           if [ "${{ inputs.repair }}" = "true" ]; then
             args+=(--repair)
           fi
-          if [ "${{ inputs.agent }}" = "true" ]; then
-            if [ -z "${CAESER_GATEWAY_ENDPOINT:-}" ] || [ -z "${CAESER_GATEWAY_MODEL:-}" ]; then
-              echo 'agent=true requires GEMINI_API_KEY and a valid gemini_model' >&2
-              exit 2
-            fi
-            args+=(--agent)
-          fi
           if [ -n "$CAESER_DOCKER_IMAGE" ]; then
             args+=(--executor docker --image "$CAESER_DOCKER_IMAGE")
           fi
           outer_timeout=$((CAESER_INVESTIGATION_TIMEOUT_SECONDS + 30))
           timeout --signal=TERM --kill-after=15s "${outer_timeout}s" \
             "$RUNNER_TEMP/caeser" "${args[@]}" > "$RUNNER_TEMP/caeser-report.json"
+
+      - name: Analyze diagnosis with Gemini
+        if: inputs.agent
+        env:
+          CAESER_GATEWAY_ENDPOINT: http://127.0.0.1:8787
+          CAESER_GATEWAY_MODEL: ${{ inputs.gemini_model }}
+          TARGET_ROOT: ${{ runner.temp }}/target
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          CODE_RETRIEVAL: ${{ inputs.agent_code_retrieval }}
+        run: |
+          set -euo pipefail
+          code_args=()
+          if [ "$CODE_RETRIEVAL" = "true" ]; then
+            code_args=(--code-repo "$TARGET_ROOT" --code-revision "$HEAD_SHA")
+          fi
+          "$RUNNER_TEMP/caeser" analyze \
+            --report "$RUNNER_TEMP/caeser-report.json" \
+            --output "$RUNNER_TEMP/caeser-gemini-report.json" \
+            "${code_args[@]}"
+          mv "$RUNNER_TEMP/caeser-gemini-report.json" "$RUNNER_TEMP/caeser-report.json"
 
       - name: Write run summary
         env:
