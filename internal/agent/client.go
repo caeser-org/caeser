@@ -206,7 +206,7 @@ func (c *Client) complete(ctx context.Context, prompt, name string, schema map[s
 	req.Header.Set("Content-Type", "application/json")
 	h := c.HTTP
 	if h == nil {
-		h = &http.Client{Timeout: 120 * time.Second}
+		h = &http.Client{Timeout: 240 * time.Second}
 	}
 	res, err := h.Do(req)
 	if err != nil {

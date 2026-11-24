@@ -31,7 +31,7 @@ func (c *Client) AnalyzeWithCode(ctx context.Context, in Input, repo, revision s
 	if !fullGitRevision.MatchString(revision) {
 		return Report{}, fmt.Errorf("code retrieval requires a full commit ID")
 	}
-	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 240*time.Second)
 	defer cancel()
 	if gitOutputPrefix(ctx, repo, 32, "cat-file", "-t", revision) != "commit\n" {
 		return c.Analyze(ctx, in)
@@ -40,7 +40,7 @@ func (c *Client) AnalyzeWithCode(ctx context.Context, in Input, repo, revision s
 	var plan struct {
 		Lookups []codeLookup `json:"lookups"`
 	}
-	planCtx, endPlan := context.WithTimeout(ctx, 20*time.Second)
+	planCtx, endPlan := context.WithTimeout(ctx, 30*time.Second)
 	_, err := c.complete(planCtx, evidencePrompt(Input{
 		Classification: in.Classification, Command: in.Command, Context: in.Context,
 		Evidence: CompactEvidence(in.Evidence, in.Context, 10<<10),

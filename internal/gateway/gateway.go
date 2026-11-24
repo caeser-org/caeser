@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func ConfigFromEnvironment() Config {
-	timeout := 120 * time.Second
+	timeout := 240 * time.Second
 	provider := strings.ToLower(envOr("CAESER_GATEWAY_PROVIDER", "ollama"))
 	endpoint := os.Getenv("CAESER_GATEWAY_ENDPOINT")
 	if endpoint == "" {
@@ -445,7 +445,9 @@ func (s *Server) postJSON(ctx context.Context, endpoint, apiKey string, body, ou
 }
 
 func retryableStatus(status int) bool {
-	return status == http.StatusTooManyRequests || status == http.StatusInternalServerError || status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
+	// A 429 can represent a model quota window lasting minutes or hours. Blind
+	// short retries only consume more requests and hide the useful reset hint.
+	return status == http.StatusInternalServerError || status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
