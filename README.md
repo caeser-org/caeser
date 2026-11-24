@@ -1,23 +1,28 @@
 # Caeser
 
-### Open-source Go CI failure investigator (v0.1.2)
+### Go CI investigation engine
 
-Caeser reads a failed CI run, traces the failure through the checked-out source,
-and updates one comment on the pull request with the failure, the evidence, and
-the most defensible functions to inspect. It separates what the failure
-**observed** from what static and runtime evidence merely **suggests**, and it
-does not claim a verified root cause unless the existing stringent verification
-gates are satisfied.
+Caeser turns a failed Go CI run into a structured investigation. It connects
+the original logs and artifacts to the exact source revision, traces failure
+locations and values through the code, and ranks evidence-backed leads. When
+deeper investigation is enabled, it can reproduce failures, compare revisions,
+run focused experiments, and use a configured model to help assess evidence or
+propose a repair. The result is a report developers can inspect, continue with
+their own tools or assistant, and verify themselves.
 
-> **Read this before relying on it.** Caeser is an investigation aid, not
-> a root-cause oracle. On six development-exposed cases it named the correct
-> function 6/6 times. The first five curated regressions originally scored 1/5;
-> those five are now development-exposed and score 3/5 after tuning. A later
-> ten-case batch scored **3/10 (30%) exact function** on its first evaluation,
-> but that batch has since been exposed by model selection, so there is
-> currently **no clean independent number**.
-> Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
-> auto-merge, auto-revert, or assign blame.
+Caeser separates what a run **observed** from what source analysis, experiments,
+or a model **infer**. It can stop with unresolved questions when evidence runs
+out; it does not guarantee a root cause or a fix. The default GitHub workflow
+is evidence-first. Reproduction, cold-path experiments, model analysis, and
+repair are separate opt-in paths; see [what runs by default](#default-ci-path-and-deeper-investigations).
+
+> **Evaluation status:** Existing localization results are development-exposed
+> and are not independent accuracy estimates. A recent 10-case rerun produced
+> 3 exact-function hits and 1 abstention; the batch has now been used during
+> development, so this is a reproducibility result, not a clean holdout score.
+> Caeser has not yet established its accuracy or time savings on unfamiliar
+> failures. Do not use ranked leads as verified causes or for automatic
+> merge, revert, or blame decisions.
 
 **Go only.** Other adapters are foundations, not validated features.
 
@@ -33,6 +38,28 @@ gates are satisfied.
 | A short failure summary and the most likely function to inspect | Failed checks, source excerpts, evidence, and next checks in `caeser-brief.md` | A paste-ready brief from `caeser brief --report report.json --prompt` |
 | Ranked function leads with reason, confidence, and evidence IDs | Inspect `caeser-report.json` for the structured `likely_function` and `candidate_report` records | Export locally without calling a model |
 | Expand **Diagnosis details** for the reasoning behind a lead | Review observed locations separately from inferred candidates | Export locally without calling a model |
+
+## Default CI path and deeper investigations
+
+The standard GitHub Actions integration runs a fast, evidence-first pass: it
+downloads the failed run's logs and artifacts, checks out the failing revision,
+builds a structured report, and publishes a pull-request comment. It does not
+rerun the target tests when the original failure evidence is usable.
+
+The broader engine can do more, when configured: reproduce the failure, compare
+base and head, run bounded Go cold-path checks or runtime probes, ask a configured
+model to analyze a bounded evidence package, or enter the separate repair flow.
+These actions have execution and iteration boundaries; they are not all
+automatically enabled by the default CI integration. Reports preserve the
+evidence, hypotheses, activities, experiments, patches, and verification
+results so a developer—or another assistant—can continue the investigation.
+
+Caeser can connect to a configured model provider through its harness, or expose
+investigation tools through MCP for an agent client. Model analysis is an
+optional participant: it does not overwrite deterministic classification or
+turn a hypothesis into a verified mechanism. See the
+[architecture guide](docs/runtime-architecture.md) for component boundaries and
+the [CI options](docs/ci-integration.md) for what can be enabled.
 
 ## Why the engine is structured this way
 
@@ -54,7 +81,7 @@ not silently become an answer to another.
 | Independent report export | A useful investigation brief can be generated and shared without a model call. |
 
 Measured localization and verification results are listed under
-[validation](#status).
+[validation](#status), with links to the reports and their limits.
 
 ## Try it locally
 
@@ -236,23 +263,14 @@ What the engine computes today:
 - Base/head delta correlation and assertion-anchored traces where evidence
   exists; unverified paths are reported as boundaries rather than guessed.
 
-**Measured, not assumed:**
-
-- **Six paired development cases** (used while building the engine): 6/6
-  exact-function with tracing enabled vs 5/6 disabled, no regressions. This is
-  *function localization*, not verified diagnosis.
-- **First five verified regressions**: originally 1/5 exact-function. These are
-  now development-exposed and score 3/5 after tuning, so they are not an
-  independent rate.
-- **Ten-case batch**: scored 3/10 with one abstention on its first evaluation,
-  then used to accept or reject two engine changes. It is now development-exposed
-  and is not an independent number.
-
-There is currently no clean independent measurement. There is no claim that
-Caeser identifies a defect-introducing change reliably on unfamiliar code.
-Runtime probes and verified-mechanism checks remain narrow and experimental. See
-[capabilities and limitations](docs/capabilities.md) and the
-[v0.1.2 notes](docs/releases/v0.1.2.md).
+**Current evidence:** Six paired development cases scored 6/6 exact-function
+with assertion tracing enabled and 5/6 without. Five curated regressions score
+3/5 after tuning. The ten-case batch scored 3/10 exact-function with one
+abstention and has since been used during development. All these cases are
+development-exposed; none is a clean independent estimate. Runtime probes and
+verified-mechanism checks remain narrow and experimental. See
+[capabilities and limitations](docs/capabilities.md), [the evaluation guide](docs/diagnosis-evaluation.md),
+and the [v0.1.2 notes](docs/releases/v0.1.2.md).
 
 ## Architecture
 

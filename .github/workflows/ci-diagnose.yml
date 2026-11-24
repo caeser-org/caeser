@@ -653,9 +653,9 @@ jobs:
             "**Triage**: " + triagephrase +
               (if .comparison then " · base " + ((.comparison.base.failures // 0)|tostring) + "/" + ((.comparison.base.attempts // 0)|tostring) + ", head " + ((.comparison.head.failures // 0)|tostring) + "/" + ((.comparison.head.attempts // 0)|tostring) else "" end) + "\n\n" +
             (if $p == null then
-              "**Primary suspect**\n\nNo implementation lead was admitted; see the investigation brief.\n\n"
+              "**Best place to start**\n\nNo implementation lead was admitted; see the investigation brief for the evidence boundary and next checks.\n\n"
             else
-              "**Primary suspect**\n\n" +
+              "**Best-supported place to start**\n\n" +
               "**" + ($p.function // "unknown") + "** — " + ($p | provphrase) + "\n\n" +
               "`" + ($p.file // "unknown") + ":" + (($p.line // 0)|tostring) + "`\n\n" +
               (if ((.causal_explanation.hypothesis // "") == "") then ($p | reasonphrase) + "\n\n" else "" end) +
@@ -663,10 +663,10 @@ jobs:
               (($p.confidence // "low") | ascii_upcase | .[0:1] + (.[1:] | ascii_downcase)) + " confidence · Causal mechanism not verified\n\n"
             end) +
             (if ($alt|length)>0 then
-              "**Related functions**\n\n" +
+              "**Other leads to check**\n\n" +
               ([ $alt[] | "- `" + (.function // "unknown") + "` — " + (.file // "unknown") + ":" + ((.line // 0)|tostring) ] | join("\n")) + "\n\n"
             else "" end) +
-            "Investigation lead only. Root cause not verified.\n"
+            "Use this as a starting point, then verify it against the failure. Caeser has not established the root cause.\n"
           ' "$report")"
           {
             printf '%s\n' "$diagnosis_body"
@@ -680,9 +680,9 @@ jobs:
               printf '\n**Still unverified**\n\n%s\n' "$(plain "$causal_unresolved")"
             fi
             if [ -n "$causal_checks" ]; then
-              printf '\n**What to investigate**\n\n<pre>%s</pre>\n' "$(plain "$causal_checks")"
+              printf '\n**Next checks**\n\n<pre>%s</pre>\n' "$(plain "$causal_checks")"
             elif [ -n "$next_actions" ]; then
-              printf '\n**What to investigate**\n\n<pre>%s</pre>\n' "$(plain "$next_actions")"
+              printf '\n**Next checks**\n\n<pre>%s</pre>\n' "$(plain "$next_actions")"
             fi
             printf '\n[View the workflow run and download the investigation brief](%s)\n' "$artifact_url"
             if [ "${COMMENT_DETAIL:-short}" = "detailed" ]; then
