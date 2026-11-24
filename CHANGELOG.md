@@ -13,6 +13,11 @@ See [v0.1.2 notes](docs/releases/v0.1.2.md).
 
 ## Unreleased
 
+- Marked the ten-case batch development-exposed. Two evidence-grounded engine
+  changes (chain duplicate upgrade plus test-name admission, and separate
+  collection budgets for implementation versus test candidates) were rejected
+  because they did not improve, or regressed, the batch. The batch no longer
+  provides an independent number and a new frozen batch is required.
 - Added a frozen independent batch of ten verified cases from unseen
   repositories. First evaluation, before any tuning: 3/10 exact-function with
   one abstention. The batch is a validation set and must not be used for

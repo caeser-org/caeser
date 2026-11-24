@@ -1,5 +1,11 @@
 # Fresh independent batch: first evaluation
 
+Exposure notice: this batch is no longer a clean holdout. After the first
+evaluation below, it was used to accept or reject two candidate engine changes.
+Those changes were rejected. Treat every case here as development-exposed and do
+not report this as an independent accuracy number. A new frozen batch is required
+for any independent claim.
+
 Ten frozen cases from repositories Ceaser had not been tuned against.
 Each case was verified before scoring: base fails the injected regression
 test as a test failure and head passes. The engine was not tuned against

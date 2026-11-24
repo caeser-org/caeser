@@ -1,5 +1,5 @@
 {
-  "note": "Frozen fresh independent batch of ten cases. Each was verified (base fails as a test failure, head passes) before its first and only evaluation. No case was inspected to design or tune a fix before that evaluation. Do not tune against this batch. Mark cases exposed only after they have been used for tuning.",
+  "note": "Frozen fresh independent batch of ten cases. Each was verified before its first and only scoring run. After that run, the batch was used to select and reject two candidate engine changes, so it is now development-exposed and MUST NOT be reported as an independent accuracy number. A new frozen batch is required for any independent claim. Do not tune against this batch.",
   "cases": [
     {
       "id": "gin-gonic-gin-4852",
@@ -16,7 +16,7 @@
         }
       ],
       "provenance": "gin-gonic/gin#4852 merged bug fix; reviewed from the tree.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "node.getValue",
@@ -40,7 +40,7 @@
         }
       ],
       "provenance": "go-chi/chi#1159 merged bug fix; reviewed from the mux.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "ABSTAIN",
@@ -64,7 +64,7 @@
         }
       ],
       "provenance": "go-chi/chi#1156 merged bug fix; reviewed from the middleware/compress.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "NewCompressor",
@@ -88,7 +88,7 @@
         }
       ],
       "provenance": "go-chi/chi#1148 merged bug fix; reviewed from the tree.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "NewRouteContext",
@@ -112,7 +112,7 @@
         }
       ],
       "provenance": "go-chi/chi#1097 merged bug fix; reviewed from the mux.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "NewRouter",
@@ -136,7 +136,7 @@
         }
       ],
       "provenance": "labstack/echo#3238 merged bug fix; reviewed from the bind.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "bindData",
@@ -160,7 +160,7 @@
         }
       ],
       "provenance": "labstack/echo#3113 merged bug fix; reviewed from the router.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "DefaultRouter.Route",
@@ -184,7 +184,7 @@
         }
       ],
       "provenance": "golang-jwt/jwt#511 merged bug fix; reviewed from the map_claims.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "MapClaims.GetAudience",
@@ -208,7 +208,7 @@
         }
       ],
       "provenance": "spf13/pflag#511 merged bug fix; reviewed from the flag.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "FlagSet.parseSingleShortArg",
@@ -232,7 +232,7 @@
         }
       ],
       "provenance": "spf13/pflag#542 merged bug fix; reviewed from the flag.go fix hunk",
-      "exposed": false,
+      "exposed": true,
       "first_evaluation": {
         "verified": true,
         "primary": "NewFlagSet",

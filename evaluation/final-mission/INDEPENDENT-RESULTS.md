@@ -1,13 +1,18 @@
 # Evaluation status: independent batch and exposed early cases
 
-## Current independent measurement
+## Most recent batch (now development-exposed)
 
-A fresh batch of ten verified cases from repositories Ceaser had not been tuned
-against was frozen before its first evaluation. Exact-function: **3/10 (30%)**,
-with one abstention. This is the honest independent signal for the engine as
-shipped in v0.1.1. The cases remain frozen and must not be used for tuning. Full
-table: [FRESH10-RESULTS.md](../holdout/FRESH10-RESULTS.md). Manifest:
+A ten-case batch was frozen before its first evaluation and scored 3/10 with one
+abstention. It was then used to accept or reject two candidate engine changes,
+both of which were rejected. The batch is therefore development-exposed and must
+not be reported as an independent accuracy number. There is currently no clean
+independent measurement. Full table:
+[FRESH10-RESULTS.md](../holdout/FRESH10-RESULTS.md). Manifest:
 [fresh10-manifest.json](../holdout/fresh10-manifest.json).
+
+Key finding from that batch: the reviewed culprit was already present in the
+engine's candidate set for 9 of the 10 cases, but was not selected. The limit is
+selection under weak signals, not missing candidates.
 
 ## Early case history
 

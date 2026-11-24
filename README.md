@@ -13,8 +13,9 @@ gates are satisfied.
 > a root-cause oracle. On six development-exposed cases it named the correct
 > function 6/6 times. The first five curated regressions originally scored 1/5;
 > those five are now development-exposed and score 3/5 after tuning. A later
-> frozen batch of ten genuinely independent cases scored **3/10 (30%) exact
-> function** on its first evaluation. Details are in
+> ten-case batch scored **3/10 (30%) exact function** on its first evaluation,
+> but that batch has since been exposed by model selection, so there is
+> currently **no clean independent number**. Details are in
 > [the evaluation status](evaluation/final-mission/INDEPENDENT-RESULTS.md).
 > Hypotheses and ranked leads are **not** verified causes. Do not use Caeser to
 > auto-merge, auto-revert, or assign blame.
@@ -245,15 +246,15 @@ What the engine computes today:
 - **First five verified regressions**: originally 1/5 exact-function. These are
   now development-exposed and score 3/5 after tuning, so they are not an
   independent rate.
-- **Fresh independent batch**: ten verified cases from unseen repositories,
-  frozen before their first evaluation, scored **3/10 (30%) exact-function**
-  with one abstention. See
+- **Ten-case batch**: scored 3/10 with one abstention on its first evaluation,
+  then used to accept or reject two engine changes. It is now development-exposed
+  and is not an independent number. See
   [INDEPENDENT-RESULTS.md](evaluation/final-mission/INDEPENDENT-RESULTS.md) and
   [FRESH10-RESULTS.md](evaluation/holdout/FRESH10-RESULTS.md).
 
-This 3/10 is the honest independent signal. There is no claim that Caeser
-identifies a defect-introducing change reliably on unfamiliar code. Runtime
-probes and verified-mechanism checks remain narrow and experimental. See
+There is currently no clean independent measurement. There is no claim that
+Caeser identifies a defect-introducing change reliably on unfamiliar code.
+Runtime probes and verified-mechanism checks remain narrow and experimental. See
 [capabilities and limitations](docs/capabilities.md) and the
 [v0.1.2 notes](docs/releases/v0.1.2.md).
 
