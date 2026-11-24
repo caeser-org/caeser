@@ -107,7 +107,6 @@ actually find, not just the title.
 | [Probe rerun results](../evaluation/probe-rerun/README.md) | Per-case stage outcomes and raw artifacts. |
 | [MinIO fixture repair](../evaluation/fixture-repairs/minio-2342/README.md) | A worked example of repairing a fixture and recording hashes and baseline/fixed-head checks. |
 | [Evaluation mission files](../evaluation/final-mission/) | `PLAN.md`, `PROGRESS.md`, `EVIDENCE-MAP.md`, `RESULTS.md` and `LIMITATIONS.md` — the persistent engineering record for the evaluation mission. |
-| [Product demo recorder](../demo/README.md) | How the landing-page demo is captured from a real failed CI run and real PR comment; how to re-record when the output changes. |
 
 ### Releases and project
 
