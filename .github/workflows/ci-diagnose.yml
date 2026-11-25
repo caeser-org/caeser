@@ -709,6 +709,7 @@ jobs:
           client-id: ${{ inputs.comment_app_client_id }}
           private-key: ${{ secrets.CAESER_APP_PRIVATE_KEY }}
           permission-issues: write
+          permission-pull-requests: write
 
       - name: Publish bounded diagnosis comment
         uses: actions/github-script@v7
