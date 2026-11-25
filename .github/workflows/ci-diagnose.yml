@@ -624,9 +624,9 @@ jobs:
               elif .kind == "probe_operation" then "A bounded runtime probe selected this operation."
               else (.reason // "Ranked investigation lead.") end;
             def triagephrase:
-              if .classification == "real_regression" then "real regression — fails here and passed on base"
-              elif .classification == "pre_existing_failure" then "pre-existing — also fails on base"
-              elif .classification == "flaky" then "flaky — mixed pass/fail outcomes"
+              if .classification == "real_regression" then "regression indicated"
+              elif .classification == "pre_existing_failure" then "pre-existing failure"
+              elif .classification == "flaky" then "flaky with mixed outcomes"
               elif .classification == "dependency_or_toolchain_drift" then "dependency or toolchain drift"
               elif .classification == "infrastructure_or_environment" then "environment or infrastructure fault"
               elif .classification == "inconclusive" then "inconclusive"
@@ -634,44 +634,47 @@ jobs:
               elif .classification == "test_failure_observed" then "observed test failure"
               elif .classification == "lint_failure_observed" then "observed lint failure"
               else (.classification // "unknown") end;
+            def safe: tostring | .[0:700] | gsub("@"; "＠") | @html;
+            def location: (.file // "") as $file |
+              if $file == "" then "" else $file + (if (.line // 0) > 0 then ":" + (.line|tostring) else "" end) end;
+            def lead: ((.function // "Source candidate") + (location | if . == "" then "" else " at " + . end)) | safe;
             .likely_function.primary as $p |
-            .likely_function.alternates as $alt |
+            ([.normalized_evidence.executions[]?.tests[]? | select(.state == "failed" and ((.name // "") != ""))]) as $failed |
+            (([$failed[] | select(.name | contains("/"))][0] // $failed[0] // {})) as $test |
+            (([.failure_episodes[]? | select((.test_identifier // "") != "runtime exception")][0] // .failure_episodes[0] // {})) as $episode |
+            ([$test.message, $episode.failure_message] | map(select(type == "string" and length > 0)) | .[0]) as $message |
             "## Caeser diagnosis\n\n" +
-            "**Unverified**\n\n" +
             "**Failure**\n\n<pre>" +
-            (([ .normalized_evidence.executions[]?.tests[]? | select(.state=="failed" and ((.name//"")!="")) ]) as $failed |
-             ([ $failed[] | select(.name|contains("/")) ]) as $subs |
-             ([ $failed[] | select((.name|contains("/"))|not) ]) as $parents |
-             (($parents[0].name // ($subs[0].name | split("/")[0]) // "failure")) as $title |
-             ($subs[0].file // $parents[0].file // "unknown") as $file |
-             ($subs[0].line // $parents[0].line // 0) as $line |
-             ($title + "\n" +
-              (if ($subs|length)>0 then (($subs|length|tostring) + " failing subtests · " + $file + ":" + ($line|tostring)) else ($file + ":" + ($line|tostring)) end) +
-              (if ($subs|length)>0 then ("\n" + ([ $subs[] | "- " + (.name | split("/")[1]) ] | join("\n"))) else "" end) +
-              (([ $subs[]?.message | select(length>0) ] | unique | .[0]) as $m | if $m then ("\n" + $m) else "" end))) +
+            ([$test.name // $episode.test_identifier // triagephrase, ($test | location), $message]
+              | map(select(. != null and . != "") | safe) | join("\n")) +
             "</pre>\n\n" +
-            "**Triage**: " + triagephrase +
-              (if .comparison then " · base " + ((.comparison.base.failures // 0)|tostring) + "/" + ((.comparison.base.attempts // 0)|tostring) + ", head " + ((.comparison.head.failures // 0)|tostring) + "/" + ((.comparison.head.attempts // 0)|tostring) else "" end) + "\n\n" +
-            (if $p == null then
-              "**Best place to start**\n\nNo implementation lead was admitted; see the investigation brief for the evidence boundary and next checks.\n\n"
-            else
-              "**Best-supported place to start**\n\n" +
-              "**" + ($p.function // "unknown") + "** — " + ($p | provphrase) + "\n\n" +
-              "`" + ($p.file // "unknown") + ":" + (($p.line // 0)|tostring) + "`\n\n" +
-              (if ((.causal_explanation.hypothesis // "") == "") then ($p | reasonphrase) + "\n\n" else "" end) +
-              (if $p.kind != "observed_stack" then "Identified beyond the observed stack\n\n" else "" end) +
-              (($p.confidence // "low") | ascii_upcase | .[0:1] + (.[1:] | ascii_downcase)) + " confidence · Causal mechanism not verified\n\n"
-            end) +
-            (if ($alt|length)>0 then
-              "**Other leads to check**\n\n" +
-              ([ $alt[] | "- `" + (.function // "unknown") + "` — " + (.file // "unknown") + ":" + ((.line // 0)|tostring) ] | join("\n")) + "\n\n"
-            else "" end) +
-            "Use this as a starting point, then verify it against the failure. Caeser has not established the root cause.\n"
+            "**Triage** " + triagephrase + "\n\n" +
+            "**PR verification** " +
+            (if .go_cold_path then
+              "Focused Go check: " + ((.go_cold_path.verdict // "inconclusive") | safe) +
+              " (head matches: " + ((.go_cold_path.head.matched // 0)|tostring) +
+              (if .go_cold_path.base then ", base matches: " + ((.go_cold_path.base.matched // 0)|tostring) else ", no base result" end) + ")"
+            elif .comparison then
+              "Base failures: " + ((.comparison.base.failures // 0)|tostring) + "/" + ((.comparison.base.attempts // 0)|tostring) +
+              ". Head failures: " + ((.comparison.head.failures // 0)|tostring) + "/" + ((.comparison.head.attempts // 0)|tostring) + "."
+            else "No base/head comparison was recorded." end) + "\n\n" +
+            "**Root cause** " +
+            (if (.root_cause.status == "established" or .root_cause.status == "confirmed") and .root_cause.verification_status == "verified"
+             then (.root_cause.statement // "Verified mechanism." | safe)
+             else "Unverified." end) + "\n\n" +
+            "**Start here**\n\n" +
+            (if $p then
+              "<strong>" + ($p | lead) + "</strong>\n\n" +
+              ($p | reasonphrase | safe) + "\n\n" +
+              (if (($p.evidence_ids // []) | length) > 0 then "Evidence: " + ($p.evidence_ids[:3] | join(", ") | safe) + "\n\n" else "" end)
+            else "Use the failure above as the starting point. The report has no ranked implementation lead.\n\n" end) +
+            ([.likely_function.alternates[:2][]? | "- " + (. | lead) + " (" + (. | provphrase) + ")"] |
+              if length > 0 then "**Other leads**\n\n" + join("\n") + "\n" else "" end)
           ' "$report")"
           {
             printf '%s\n' "$diagnosis_body"
             if [ -n "$causal_hypothesis" ]; then
-              printf '\n**Why this is the suspect**\n\n%s\n' "$(plain "$causal_hypothesis")"
+              printf '\n**Mechanism hypothesis**\n\n%s\n' "$(plain "$causal_hypothesis")"
             fi
             if [ -n "$causal_support" ]; then
               printf '\nEvidence support: `%s`\n' "$(plain "$causal_support")"
@@ -694,7 +697,7 @@ jobs:
           jq -r '
             if .agent_status == "completed" then
               [.agent.hypotheses[0:2][]? |
-                ((.statement // "")[0:600] + " [Evidence: " +
+                (([.statement, (if (.next_check // "") != "" then "Next check: " + .next_check else empty end), (if (.suggested_fix // "") != "" then "Suggested fix (unverified): " + .suggested_fix + (if ((.fix_evidence_ids // []) | length) > 0 then " [Fix evidence: " + (.fix_evidence_ids[:3] | join(", ")) + "]" else "" end) else empty end)] | map(.[:450]) | join("\n")) + " [Evidence: " +
                  ((.supporting_evidence_ids // []) | join(", ") | .[0:240]) + "]") |
                 gsub("@"; "＠") | @html]
               | if length > 0 then "\n<details>\n<summary>Optional model interpretation</summary>\n\n<pre>" + join("\n\n") + "</pre>\n\n</details>" else empty end
