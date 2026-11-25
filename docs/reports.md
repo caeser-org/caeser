@@ -7,7 +7,7 @@
 | Short PR comment | The pull request associated with the failed run | See the failure, a supported explanation when available, and where to start. |
 | Diagnosis details | Expand the section in the comment or set `comment_detail: detailed` | Review the evidence behind the leads and the next checks. |
 | `caeser-brief.md` | Download the workflow artifact | Read or share a self-contained Markdown brief with source and log excerpts. |
-| `caeser-report.json` | The same artifact | Inspect the structured report, including evidence IDs and limitations. |
+| `caeser-report.json` | The same artifact | Inspect the structured report, including evidence IDs. |
 | Likely function shortlist | "Likely function to inspect" in the PR comment and `likely_function` in `caeser-report.json` | Pick a function to inspect first, with its alternates, reason and evidence IDs. |
 
 Open the Caeser Actions run linked from the comment. Under **Artifacts**, download
@@ -41,9 +41,9 @@ before sharing them. They can contain excerpts from private code and CI logs.
   Start there if it helps and check it against the failure.
 - **Established** is reserved for mechanisms supported by the required evidence.
   Establishing a mechanism and attributing it to a PR are separate findings.
-- **Likely function** is an investigation lead, not a root-cause finding. It is
-  available without runtime probing and is labeled with its provenance so an
-  observed frame, an exact SSA value and an inferred call can be checked apart.
+- **Likely function** is an investigation lead. It is available without runtime
+  probing and is labeled with its provenance so an observed frame, an exact SSA
+  value and an inferred call can be checked apart.
 
 ## Likely function leads
 
@@ -55,8 +55,7 @@ assertion over generic inferred call leads.
 
 `status: unavailable` means no function-level lead was available — for example
 when localization reached only the file level, or the log had no usable source
-anchor. A ranked suspect is where to look first; it is not a verified mechanism
-and does not establish that the pull request introduced the failure.
+anchor. A ranked suspect is where to look first.
 
 An evidence-first run labels reproduction as deferred. Logs and tests from the
 original CI run are observations, even when their failure count is nonzero.

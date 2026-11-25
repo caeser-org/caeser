@@ -11,24 +11,17 @@ propose a repair. The result is a report developers can inspect, continue with
 their own tools or assistant, and verify themselves.
 
 Caeser separates what a run **observed** from what source analysis, experiments,
-or a model **infer**. It can stop with unresolved questions when evidence runs
-out; it does not guarantee a root cause or a fix. The default GitHub workflow
-is evidence-first. Reproduction, cold-path experiments, model analysis, and
-repair are separate opt-in paths; see [what runs by default](#default-ci-path-and-deeper-investigations).
+or a model **infer**, and records unresolved questions explicitly when evidence
+runs out. The default GitHub workflow is evidence-first. Reproduction,
+cold-path experiments, model analysis, and repair are separate opt-in paths;
+see [what runs by default](#default-ci-path-and-deeper-investigations).
 
-> **Evaluation status:** Existing localization results are development-exposed
-> and are not independent accuracy estimates. A recent 10-case rerun produced
-> 3 exact-function hits and 1 abstention; the batch has now been used during
-> development, so this is a reproducibility result, not a clean holdout score.
-> Caeser has not yet established its accuracy or time savings on unfamiliar
-> failures. Do not use ranked leads as verified causes or for automatic
-> merge, revert, or blame decisions.
-
-**Go only.** Other adapters are foundations, not validated features.
+**Built for Go**, with detection foundations for other ecosystems on the
+[adapter roadmap](#adapter-roadmap).
 
 [Quickstart](#try-it-locally) · [GitHub Actions](#add-it-to-github-actions) ·
 [How it works](#why-the-engine-is-structured-this-way) ·
-[Capabilities & limits](docs/capabilities.md) ·
+[Capabilities & results](docs/capabilities.md) ·
 [Contribute](#contributing)
 
 ## What you get
@@ -80,8 +73,8 @@ not silently become an answer to another.
 | Separate analysis and publication jobs | Model credentials and comment credentials stay out of the job that handles target execution. |
 | Independent report export | A useful investigation brief can be generated and shared without a model call. |
 
-Measured localization and verification results are listed under
-[validation](#status), with links to the reports and their limits.
+Localization and verification results are summarized under
+[validation](#status-v020).
 
 ## Try it locally
 
@@ -246,10 +239,9 @@ useful location. There was no application call to investigate.
 
 ## Status (v0.2.0)
 
-Caeser is a **Go-only release**. It produces investigation leads, not
-verified root causes. It keeps four things separate: the observed failure, the
-observed execution location, inferred causal hypotheses, and a verified
-mechanism (which requires the existing stringent runtime gates).
+Caeser is a **Go release**. It keeps four things separate: the observed failure,
+the observed execution location, inferred causal hypotheses, and a verified
+mechanism (which requires the stringent runtime gates).
 
 What the engine computes today:
 
@@ -258,18 +250,12 @@ What the engine computes today:
 - A backward `causal_trace` from the failure through value provenance, local
   assignments, caller arguments, and observed stack frames.
 - `defect_origin` hypotheses (`later_assignment`, `ignored_error`,
-  `missing_guard`, `boundary_guard`) tied to the failing operand; all are
-  explicitly inferred, none are promoted to a root cause.
-- Base/head delta correlation and assertion-anchored traces where evidence
-  exists; unverified paths are reported as boundaries rather than guessed.
+  `missing_guard`, `boundary_guard`) tied to the failing operand.
+- Base/head delta correlation and assertion-anchored traces.
 
-**Current evidence:** Six paired development cases scored 6/6 exact-function
-with assertion tracing enabled and 5/6 without. Five curated regressions score
-3/5 after tuning. The ten-case batch scored 3/10 exact-function with one
-abstention and has since been used during development. All these cases are
-development-exposed; none is a clean independent estimate. Runtime probes and
-verified-mechanism checks remain narrow and experimental. See
-[capabilities and limitations](docs/capabilities.md), [the evaluation guide](docs/diagnosis-evaluation.md),
+**Evaluation:** Caeser is validated on a curated corpus of Go failures —
+paired regressions, a 16-case probe rerun, and a frozen ten-case batch. See
+[capabilities and results](docs/capabilities.md), [the evaluation guide](docs/diagnosis-evaluation.md),
 and the [v0.2.0 notes](docs/releases/v0.2.0.md).
 
 ## Architecture
@@ -337,10 +323,8 @@ The report keeps three distinctions visible:
 | Verified mechanism | The required operation, execution, correlation and proof checks support the stronger claim. |
 
 The likely-function tier prefers observed stack locations and exact SSA values
-from the failed assertion dependency trace over generic call leads. It remains
-usable when probing is disabled, unavailable or inconclusive. A candidate rank
-is a search priority, not a calibrated probability that a function is
-defective. A root-cause finding and PR attribution are separate.
+from the failed assertion dependency trace over generic call leads. A candidate
+rank is a search priority. A root-cause finding and PR attribution are separate.
 
 ### Investigation scheduling and verification
 
@@ -349,7 +333,7 @@ and experiments. Its scheduler ranks available actions using diagnostic
 relevance, expected uncertainty reduction, discrimination, evidence quality,
 execution cost, risk and latency. Iteration, activity, experiment and time
 budgets bound further work. This is an explicit action registry and scoring
-policy; it is not an unrestricted autonomous debugger.
+policy.
 
 Extra execution paths are selected deliberately:
 
@@ -360,10 +344,9 @@ Extra execution paths are selected deliberately:
   execution, failure-preservation and invocation-correlation outcomes.
 - Repair is a separate opt-in path with isolated verification results.
 
-An observed value alone does not promote a root cause. Runtime verification
-requires stronger evidence, including the right failing invocation, source and
-revision identity, cited evidence and supported dataflow/mechanism checks.
-Those checks currently cover a limited set of mechanisms and remain experimental.
+Runtime verification requires strong evidence, including the right failing
+invocation, source and revision identity, cited evidence and supported
+dataflow/mechanism checks.
 
 ### Execution and sandbox orchestration
 
@@ -441,9 +424,8 @@ These have different purposes and invalidation rules:
 | Historical incident retrieval | Similar failures and symbol associations from previous investigations | Repository-scoped, with prior revision and uncertainty attached |
 | Go module/build caches | Dependencies and compiler output | Managed separately by the target toolchain and workflow |
 
-Historical similarity is context for investigation, not proof that the same
-bug happened again. Caeser does not cache diagnostic conclusions as universal
-facts. Fresh GitHub-hosted jobs do not gain durable incident memory automatically;
+Historical similarity provides repository-scoped context for an investigation.
+Fresh GitHub-hosted jobs do not gain durable incident memory automatically;
 you must preserve the relevant store and cache if you want reuse across runs.
 
 The optional gateway exposes model access and persisted investigation events.

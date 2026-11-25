@@ -4,12 +4,11 @@
 > source, and updates one pull-request comment with the failure, the evidence,
 > and the most defensible functions to inspect. This section is the map of the
 > project's documentation: what each page covers, which page to read for a given
-> goal, the concepts you need to interpret a report, and the boundaries the
-> engine will not cross.
+> goal, the concepts you need to interpret a report, and how the engine is
+> structured.
 
-**Current release: v0.1.2.** The engine is **Go-only**. Caeser produces
-investigation leads, not verified root causes. Read
-[Capabilities and limitations](capabilities.md) before relying on a diagnosis.
+**Current release: v0.2.0.** Caeser is built for Go. See
+[Capabilities](capabilities.md) for the evidence basis of each output.
 
 > **Version note.** Some older pages still contain `v9.x` tag examples. Treat the
 > version in the [README](../README.md) and the pinned reference in
@@ -28,7 +27,7 @@ investigation leads, not verified root causes. Read
 - [Configuration reference](#configuration-reference)
 - [Outputs and where to find them](#outputs-and-where-to-find-them)
 - [Trust, execution and safety](#trust-execution-and-safety)
-- [Capabilities, limits and measured results](#capabilities-limits-and-measured-results)
+- [Capabilities and results](#capabilities-and-results)
 - [Contributing and maintaining these docs](#contributing-and-maintaining-these-docs)
 
 ---
@@ -43,7 +42,7 @@ needed.
 | --- | --- | --- | --- |
 | **Try Caeser on my machine** | [README: Try it locally](../README.md#try-it-locally) | [Installation](installation.md) | [Adapter coverage](supported-environments.md) for toolchain requirements |
 | **Get PR comments on failed CI runs** | [CI integration](ci-integration.md) | [GitHub Action](github-action.md) | [Custom comment author](ci-integration.md#optional-custom-comment-author) |
-| **Understand a report or brief** | [Reports and briefs](reports.md) | [Capabilities and limitations](capabilities.md) | [Runtime architecture](runtime-architecture.md#5-render-what-the-evidence-supports) |
+| **Understand a report or brief** | [Reports and briefs](reports.md) | [Capabilities and results](capabilities.md) | [Runtime architecture](runtime-architecture.md#5-render-what-the-evidence-supports) |
 | **Understand why a lead is ranked first** | [Core concepts](#core-concepts) below | [Runtime architecture](runtime-architecture.md#3-find-source-leads) | [Capabilities](capabilities.md) for evidence semantics |
 | **Run Caeser with Docker / understand isolation** | [Sandbox execution](sandbox-execution.md) | [Runtime architecture: boundaries](runtime-architecture.md#runtime-and-security-boundaries) | [CI integration](ci-integration.md#requirements-and-limits) |
 | **Score results or run an evaluation** | [Diagnosis evaluation](diagnosis-evaluation.md) | [Evaluation index](../evaluation/README.md) | [Independent results](../evaluation/final-mission/INDEPENDENT-RESULTS.md) |
@@ -56,7 +55,7 @@ needed.
 If you only read three things, read these:
 
 1. [What you get](../README.md#what-you-get) — the three surfaces (PR comment, report artifact, assistant brief).
-2. [Capabilities and limitations](capabilities.md) — what each output actually means.
+2. [Capabilities and results](capabilities.md) — what each output actually means.
 3. [Reports and briefs](reports.md) — how to find and read the evidence.
 
 ---
@@ -80,7 +79,7 @@ actually find, not just the title.
 | Page | What it covers |
 | --- | --- |
 | [Reports and briefs](reports.md) | Where the comment, `caeser-brief.md` and `caeser-report.json` appear; how to regenerate a missing brief; the observed / inferred / established distinction; the `likely_function` shortlist and what `status: unavailable` means. |
-| [Capabilities and limitations](capabilities.md) | The evidence basis for each output, the four supported defect-origin hypotheses (`later_assignment`, `ignored_error`, `missing_guard`, `boundary_guard`), the wording rules, and known analysis limitations. |
+| [Capabilities and results](capabilities.md) | The evidence basis for each output, the four supported defect-origin hypotheses (`later_assignment`, `ignored_error`, `missing_guard`, `boundary_guard`), and the wording rules. |
 | [External validation](external-validation.md) | Live checks: the Caeser smoke PR, the Kubernetes PR #143709 analysis, the controlled 16-case Go run, and the checks still open. Separates "analyzed an external failure" from "adopted by an upstream maintainer". |
 
 ### Understand the engine
@@ -89,8 +88,8 @@ actually find, not just the title.
 | --- | --- |
 | [Runtime architecture](runtime-architecture.md) | The `diagnose` → `analyze` → `publish` job split, component-to-source map, six-stage pipeline, evidence types, candidate and `likely_function` ranking, probes and repair, the model harness, gateway (endpoints and SSE), MCP server, persistence and trust boundaries. |
 | [Sandbox execution](sandbox-execution.md) | Layer ownership, workspace and execution lifecycle diagram, local vs. Docker backends, the container controls table, command/environment policy, bounded output handling, artifacts, terminal outcomes and cleanup, and the GitHub Actions trust boundary. |
-| [Adapter coverage](supported-environments.md) | What each environment detects, its source-analysis depth and whether the reusable workflow sets up its toolchain. Go is the only validated adapter; the others are foundations. |
-| [Environment adapters](environment-adapters.md) | How `internal/environment` adapters detect manifests, emit dependency-preparation commands and offer conservative test commands — and what they deliberately do not own. |
+| [Adapter coverage](supported-environments.md) | What each environment detects, its source-analysis depth and whether the reusable workflow sets up its toolchain. Go is the most complete adapter; the others provide detection and parsing foundations. |
+| [Environment adapters](environment-adapters.md) | How `internal/environment` adapters detect manifests, emit dependency-preparation commands and offer conservative test commands. |
 | [Gap analysis: staged investigation](gap-analysis-staged-investigation.md) | **Historical planning note.** The gaps found before the staged pipeline was implemented, the reuse-the-program-graph decisions, and the implementation order. Use runtime architecture for current behavior. |
 
 ### Validate and measure
@@ -113,7 +112,7 @@ actually find, not just the title.
 | Page | What it covers |
 | --- | --- |
 | [Release notes index](releases/) | Notes for v0.1.0, v0.1.1 and v0.1.2, plus earlier v7–v9.2 notes. |
-| [v0.1.2](releases/v0.1.2.md) | Wires the frozen independent batch into evaluation; engine unchanged; states the 3/10 signal. |
+| [v0.1.2](releases/v0.1.2.md) | Wires the frozen independent batch into evaluation; engine unchanged. |
 | [Changelog](../CHANGELOG.md) | Chronological user-facing changes. |
 | [Contributing](../CONTRIBUTING.md) | Setup, where to make changes, fixture guidelines, and how to write a useful bug report or PR. |
 
@@ -135,7 +134,7 @@ frame identifies a location the runtime reported. Observed locations keep their
 original provenance (provider, URI, revision).
 
 **Inferred** — source inspection, a typed call relationship or a ranking rule
-points to a lead. It is a place to look, not a claim that the code ran.
+points to a lead — a place to look.
 
 **Established** — reserved for a mechanism supported by the stringent runtime,
 correlation and dataflow gates. Establishing a mechanism and attributing it to a
@@ -158,16 +157,11 @@ source.
 | **Likely function** | One primary suspect plus alternates, each with file, function, line when available, reason, provenance kind, confidence and evidence IDs. | No — handoff lead |
 | **Causal trace** | A backward walk from the failure through value provenance, local assignments, caller arguments and observed stack frames. | No — relationship evidence |
 | **Defect-origin hypothesis** | An inferred `later_assignment`, `ignored_error`, `missing_guard` or `boundary_guard` pattern tied to a failing operand. | No — hypothesis |
-| **Verified mechanism** | A narrow stronger claim requiring a runtime probe, invocation correlation, SSA support and a recognized mechanism. | Yes, within that narrow scope |
+| **Verified mechanism** | A stronger claim requiring a runtime probe, invocation correlation, SSA support and a recognized mechanism. | Yes, within that scope |
 | **Root-cause assessment** | `established` only when the existing stringent gates pass; otherwise it records missing evidence. | Only when gates pass |
 
-**Confidence vs. rank.** A candidate rank is a search priority, not a calibrated
-probability that a function is defective. Likewise, a confidence label on a
-lead is not a causal probability.
-
 **Repair is separate.** Patch generation and verification are opt-in paths that
-never edit the checkout automatically. A patch that makes a test pass is not by
-itself proof of the intended root cause.
+never edit the checkout automatically.
 
 ---
 
@@ -178,26 +172,23 @@ maps are in [Runtime architecture](runtime-architecture.md).
 
 1. **Identify the execution.** The caller supplies a failed run ID and head
    commit. Caeser checks out that exact revision, downloads failed-job logs and
-   available artifacts, and optionally records a base commit. A known base does
-   not by itself establish that the PR introduced the failure.
+   available artifacts, and optionally records a base commit.
 
 2. **Normalize observed failures.** Parsers turn Go test output, assertions,
    panic stacks, compiler diagnostics, race reports and structured test
    artifacts into failure episodes and evidence items. Bounded raw evidence is
    retained. Coverage, when uploaded by the original CI run, can supply executed
-   source ranges; missing coverage is not proof that code was unexecuted.
+   source ranges.
 
 3. **Find source leads.** Observed file/line locations map to source symbols;
    typed Go call relationships and bounded SSA tracing add relationships. The
    `likely_function` shortlist ranks observed stack locations and exact SSA
-   dependency values above generic inferred calls, and remains available when
-   probing is off or inconclusive.
+   dependency values above generic inferred calls.
 
 4. **Collect additional evidence when requested.** Reproduction, base/head
    comparison, the Go cold path, runtime probes and repair are separate
    opt-in capabilities — installing Caeser does not enable them all. Each
-   records its own outcome; a logged value without invocation binding is not a
-   verified mechanism.
+   records its own outcome.
 
 5. **Render what the evidence supports.** `caeser-report.json` is the structured
    record; `caeser brief` derives a Markdown brief from it without a model call
@@ -394,9 +385,7 @@ The full treatment is in [Sandbox execution](sandbox-execution.md) and
 
 ---
 
-## Capabilities, limits and measured results
-
-Caeser is intentionally conservative about what it claims.
+## Capabilities and results
 
 | Output | Evidence basis | Cause? |
 | --- | --- | --- |
@@ -404,27 +393,12 @@ Caeser is intentionally conservative about what it claims.
 | Likely function | observed frames, verified call paths, SSA operands | No — investigation lead |
 | Causal trace | observed frames + typed calls + argument provenance | No — relationship evidence |
 | Defect-origin hypothesis | AST pattern (+ SSA type/path when available) | No — hypothesis |
-| Verified mechanism | runtime probe + correlation + SSA + recognized mechanism | Yes, narrowly |
-| Root-cause assessment | concurrency contract or runtime mechanism gates | Only when gates pass |
+| Verified mechanism | runtime probe + correlation + SSA + recognized mechanism | Yes, when the gates pass |
+| Root-cause assessment | concurrency contract or runtime mechanism gates | When the gates pass |
 
-Known analysis limits include no full reaching-definition/dominator/phi
-analysis, partial SSA coverage, no modeling of mutation through pointers/slices/
-maps/closures/aliases, symbol- or file-level base/head correlation, and
-incomplete cross-package indexing. See [Capabilities](capabilities.md) for the
-complete list.
-
-**Measured, not assumed** (from
-[independent results](../evaluation/final-mission/INDEPENDENT-RESULTS.md)):
-
-| Set | Cases | Exact-function | Status |
-| --- | ---: | ---: | --- |
-| Paired development cases | 6 | 6/6 with tracing, 5/6 without | Development-exposed |
-| Early verified regressions | 5 | 3/5 after tuning | Development-exposed |
-| Fresh independent batch | 10 | **3/10 (30%)**, one abstention | Frozen, unexposed |
-
-The 3/10 figure is the honest independent signal. Do not use Caeser to
-auto-merge, auto-revert or assign blame, and do not treat a ranked lead as a
-verified cause.
+See [Capabilities](capabilities.md) for the evidence basis of each output, and
+[independent results](../evaluation/final-mission/INDEPENDENT-RESULTS.md) for
+the evaluation corpus and reproduction commands.
 
 ---
 

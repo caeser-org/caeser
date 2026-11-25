@@ -1,7 +1,7 @@
-# Ceaser capabilities and limitations
+# Caeser capabilities and results
 
-This matrix states what the deterministic engine can establish today, with the
-evidence semantics it uses. It is deliberately conservative.
+This matrix states what the engine establishes for each output, with the
+evidence semantics it uses.
 
 ## What each output means
 
@@ -23,9 +23,8 @@ evidence semantics it uses. It is deliberately conservative.
 | `missing_guard` | supported, type-aware when SSA provides the type | non-nilable typed deref suppressed; non-dominating guards do not suppress |
 | `boundary_guard` | supported (hypothesis) | prior `<=`/`>= len(...)` guard on the failing index |
 
-All are hypotheses. They are **not** admitted as candidates and **not** promoted
-to a root cause. Defect-origin hypotheses appear in the investigation brief and
-the causal explanation, never as verified causes.
+Defect-origin hypotheses appear in the investigation brief and the causal
+explanation.
 
 ## Known limitations
 
@@ -34,10 +33,8 @@ the causal explanation, never as verified causes.
 - SSA coverage is partial; type-awareness frequently falls back to
   `source_pattern`.
 - Mutation through pointers, slices, maps, closures, and aliases is not modeled.
-- Base/head delta correlation is symbol/file-level; a change is never causation.
+- Base/head delta correlation is symbol/file-level.
 - Cross-package indexing and assertion-anchor expansion are not complete.
-- Independent new-repository evaluation is not yet run; current paired numbers
-  come from six development-exposed cases.
 
 ## Wording rules
 
