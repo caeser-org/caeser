@@ -7,3 +7,5 @@
 /evaluation/results/*
 !/evaluation/results/.gitkeep
 
+
+/demo/
