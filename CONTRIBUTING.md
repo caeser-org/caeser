@@ -1,5 +1,38 @@
 # Contributing to Caeser
 
+## Propose a feature or documentation improvement
+
+Check the [open issues](https://github.com/caeser-org/caeser/issues) for an
+existing proposal. Issues labeled `good first issue` are scoped for new
+contributors. Issues labeled `help wanted` are open for contributions.
+
+Use the four headings below when opening a proposal. This format adapts the
+[Kubernetes enhancement issue template](https://github.com/kubernetes/kubernetes/blob/master/.github/ISSUE_TEMPLATE/enhancement.yaml)
+with two sections to help contributors find the code and review the result.
+
+```markdown
+## What would you like to be added?
+
+Describe the change and what a developer should see or be able to do.
+
+## Why is this needed?
+
+Describe the current behavior, the gap it leaves, and an example of when it matters.
+
+## Where to start
+
+Link to the relevant workflow, package, docs, or fixture if you know where to look.
+
+## Acceptance criteria
+
+- [ ] State an observable result a reviewer can check.
+- [ ] Include a fallback case if missing evidence changes what Caeser can report.
+```
+
+For example, a request to clarify PR attribution should distinguish a passing
+base run from a base test that never ran. Point to the comment renderer and
+include both cases in the acceptance criteria.
+
 ## Report a failure Caeser handles poorly
 
 Open a GitHub issue with the CI provider, language and test runner, Caeser
@@ -65,10 +98,10 @@ pipeline, execution boundaries, and limits before changing diagnosis behavior.
 - Before opening the PR, run `go test ./...`, `go vet ./...`, and
   `go build ./...`. Note any checks you could not run and why.
 
-In the PR description, explain the failure or workflow that motivated the
-change, what the reader will see now, and how you checked it. For a
-diagnosis improvement, name the case and the evidence that supports the
-stronger conclusion.
+Use the [pull request template](.github/pull_request_template.md) to explain why
+the change is needed, what developers will see, and how you verified it. Link
+the related issue when one exists. For a diagnosis improvement, name the case
+and the evidence that supports the new result.
 
 ## Release changes
 
