@@ -1,9 +1,24 @@
 # Contributing to Caeser
 
+## Propose a feature or documentation improvement
+
+Check the [open issues](https://github.com/caeser-org/caeser/issues) for an
+existing proposal. Issues labeled `good first issue` are scoped for new
+contributors. Issues labeled `help wanted` are open for contributions.
+
+Use the [feature proposal template](.github/ISSUE_TEMPLATE/feature.md).
+Describe the workflow and gap, the proposed behavior, where to start, and
+acceptance criteria a reviewer can check.
+
+For example, a request to clarify PR attribution should distinguish a passing
+base run from a base test that never ran. Point to the comment renderer and
+include both cases in the acceptance criteria.
+
 ## Report a failure Caeser handles poorly
 
-Open a GitHub issue with the CI provider, language and test runner, Caeser
-version or commit, and the failing source revision. Include the command, a
+Use the [diagnosis issue template](.github/ISSUE_TEMPLATE/diagnosis.md). Include
+the CI provider, language and test runner, Caeser version or commit, and the
+failing source revision. Include the command, a
 small redacted log excerpt, and the current result compared with the result
 you expected. For a wrong source lead, name the file or function you expected
 and explain what supports it. For a missing comment, include the workflow run
@@ -65,10 +80,10 @@ pipeline, execution boundaries, and limits before changing diagnosis behavior.
 - Before opening the PR, run `go test ./...`, `go vet ./...`, and
   `go build ./...`. Note any checks you could not run and why.
 
-In the PR description, explain the failure or workflow that motivated the
-change, what the reader will see now, and how you checked it. For a
-diagnosis improvement, name the case and the evidence that supports the
-stronger conclusion.
+Use the [pull request template](.github/pull_request_template.md) to explain why
+the change is needed, what developers will see, and how you verified it. Link
+the related issue when one exists. For a diagnosis improvement, name the case
+and the evidence that supports the new result.
 
 ## Release changes
 
