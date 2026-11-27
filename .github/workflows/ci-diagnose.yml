@@ -579,6 +579,30 @@ jobs:
         env:
           PR_NUMBER: ${{ needs.diagnose.outputs.pr }}
           COMMENT_DETAIL: ${{ inputs.comment_detail }}
+          # One plain-text block a reader can copy from the PR comment. It reuses
+          # existing report fields and skips any that are missing.
+          COPYABLE_SUMMARY_FILTER: |
+            def safe: tostring | gsub("\\s+"; " ") | .[0:300] | gsub("@"; "＠") | @html;
+            def location: (.file // "") as $file |
+              if $file == "" then "" else $file + (if (.line // 0) > 0 then ":" + (.line|tostring) else "" end) end;
+            .likely_function.primary as $p |
+            ([.normalized_evidence.executions[]?.tests[]? | select(.state == "failed" and ((.name // "") != ""))]) as $failed |
+            (([$failed[] | select(.name | contains("/"))][0] // $failed[0] // {})) as $test |
+            (([.failure_episodes[]? | select((.test_identifier // "") != "runtime exception")][0] // .failure_episodes[0] // {})) as $episode |
+            ([$test.message, $episode.failure_message] | map(select(type == "string" and length > 0)) | .[0]) as $message |
+            ($test.name // $episode.test_identifier) as $check |
+            (if (($p.evidence_ids // []) | length) > 0 then $p.evidence_ids else (.root_cause.evidence_ids // []) end) as $evidence |
+            ((.causal_explanation.checks // [])[0]) as $causal_check |
+            [
+              (if ($check // "") != "" then "Failed check: " + ($check | safe) + ($test | location | if . == "" then "" else " (" + safe + ")" end) else empty end),
+              (if ($message // "") != "" then "Failure: " + ($message | safe) else empty end),
+              (if (.environment.head_commit // "") != "" then "Revision: " + (.environment.head_commit | safe) else empty end),
+              (if ($p.function // "") != "" then "Start here: " + ($p.function | safe) + ($p | location | if . == "" then "" else " at " + safe end) else empty end),
+              (if ($evidence | length) > 0 then "Evidence: " + ($evidence[:3] | join(", ") | safe) else empty end),
+              (if ($causal_check.target // "") != "" then "Next check: Inspect " + ($causal_check.target | safe)
+               elif ((.root_cause.next_actions // [])[0] // "") != "" then "Next check: " + (.root_cause.next_actions[0] | safe)
+               else empty end)
+            ] | join("\n")
         run: |
           set -euo pipefail
           report="$RUNNER_TEMP/caeser-result/caeser-report.json"
@@ -607,6 +631,7 @@ jobs:
               ((.root_cause.next_actions // [])[:3][] | "Next check: " + .)
             ] | bullet(.)
           ' "$report")"
+          copyable_summary="$(jq -r "$COPYABLE_SUMMARY_FILTER" "$report")"
           diagnosis_body="$(jq -r '
             def provphrase:
               if .kind == "observed_stack" then "Observed stack frame"
@@ -686,6 +711,9 @@ jobs:
               printf '\n**Next checks**\n\n<pre>%s</pre>\n' "$(plain "$causal_checks")"
             elif [ -n "$next_actions" ]; then
               printf '\n**Next checks**\n\n<pre>%s</pre>\n' "$(plain "$next_actions")"
+            fi
+            if [ -n "$copyable_summary" ]; then
+              printf '\n<details>\n<summary>Copyable summary</summary>\n\n<pre>%s</pre>\n</details>\n' "$copyable_summary"
             fi
             printf '\n[View the workflow run and download the investigation brief](%s)\n' "$artifact_url"
             if [ "${COMMENT_DETAIL:-short}" = "detailed" ]; then
