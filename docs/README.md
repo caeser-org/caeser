@@ -40,7 +40,7 @@ needed.
 
 | Goal | Start here | Then read | Only if needed |
 | --- | --- | --- | --- |
-| **Try Caeser on my machine** | [README: Try it locally](../README.md#try-it-locally) | [Installation](installation.md) | [Adapter coverage](supported-environments.md) for toolchain requirements |
+| **Try Caeser on my machine** | [README: Try it locally](../README.md#try-it-locally) | [Your first investigation](first-investigation.md), [Installation](installation.md) | [Adapter coverage](supported-environments.md) for toolchain requirements |
 | **Get PR comments on failed CI runs** | [CI integration](ci-integration.md) | [GitHub Action](github-action.md) | [Custom comment author](ci-integration.md#optional-custom-comment-author) |
 | **Understand a report or brief** | [Reports and briefs](reports.md) | [Capabilities and results](capabilities.md) | [Runtime architecture](runtime-architecture.md#5-render-what-the-evidence-supports) |
 | **Understand why a lead is ranked first** | [Core concepts](#core-concepts) below | [Runtime architecture](runtime-architecture.md#3-find-source-leads) | [Capabilities](capabilities.md) for evidence semantics |
@@ -70,6 +70,7 @@ actually find, not just the title.
 | Page | What it covers |
 | --- | --- |
 | [README](../README.md) | Product overview, quickstart, GitHub Actions caller example, configuration reference, architecture summary, adapter roadmap, troubleshooting reference table and documentation index. |
+| [Your first investigation](first-investigation.md) | One path from a small failing Go fixture to the JSON report and Markdown brief, how to find the PR comment and artifact, and how a stack frame, a ranked function and a proven cause differ. No model credentials needed. |
 | [Installation](installation.md) | Building from source (Go 1.26, Git, C compiler for SQLite), installing and verifying the v0.1.2 Linux amd64 binary, the setup action, project onboarding with `caeser init`, and setup troubleshooting. |
 | [CI integration](ci-integration.md) | Onboarding with `caeser init`, `.caeser.yml` keys, the full `workflow_run` caller, every reusable-workflow input and secret, fork-PR guard, custom GitHub App comment authorship, manual runs and local reproduction. |
 | [GitHub Action](github-action.md) | The two entry points (reusable workflow vs. setup action), a custom-job example, the setup action's `version` input and `binary-path` output, checksum verification behavior, and release/Marketplace publishing. |
