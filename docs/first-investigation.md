@@ -1,7 +1,7 @@
 # Your first investigation
 
-This walkthrough takes one small Go failure from a CI log to a report you can
-read. It uses the fixture in [`examples/first-investigation`](examples/first-investigation/)
+This walkthrough takes one small Go failure from a failure log to a report you
+can read. It uses the fixture in [`examples/first-investigation`](examples/first-investigation/)
 and needs no model credentials. By the end you should be able to point at the
 failure, its evidence ID, the function to inspect first, and the next check.
 
@@ -15,10 +15,10 @@ Build or install `caeser` as described in
 [Try it locally](../README.md#try-it-locally), and check that `caeser version`
 works. Run the steps below from a clean checkout of this repository.
 
-## 1. Collect the CI log
+## 1. Generate a sample failure log
 
-In GitHub Actions, the reusable workflow downloads the failed job's log for
-you. Locally, run the fixture's tests and save their output as the log:
+This step reproduces a failure locally instead of collecting a real CI log.
+Run the fixture's tests and save their output as the log:
 
 ```sh
 cd docs/examples/first-investigation
@@ -79,6 +79,11 @@ to inspect and what would confirm or reject the lead:
 Investigate operation return "ready":string at order.go:16 in Status — confirm if the value observed at this operation matches the recorded failure ...
 ```
 
+The suggested operation is a starting point for the investigation, not
+necessarily the faulty statement. Here `return "ready"` is not what went wrong:
+it only runs when the condition above it is true. Inspect the condition that
+controls the return value.
+
 **How far Caeser got.** Under **Verdict**, `Cause: unverified` means Caeser
 did not establish the root cause. `Verification: source and static analysis
 only` means nothing was rerun.
@@ -91,13 +96,13 @@ jq '.likely_function.primary' report.json
 jq '.root_cause | {status, verification_status, next_actions}' report.json
 ```
 
-## 4. Stack frame, ranked function, proven cause
+## 4. Failure location, ranked function, proven cause
 
 This example shows three different kinds of answer:
 
 | Kind | In this example | What it tells you |
 | --- | --- | --- |
-| Stack frame (observed) | `order_test.go:8`, from the log | Where the runtime reported the failure. Here it is the assertion, not the bug. |
+| Failure location (observed) | `order_test.go:8`, from the log | Where the test reported the failed assertion. It is an observed location, not necessarily a stack frame, and here it is not the bug. |
 | Ranked function (inferred) | `Status` at `order.go:14` | Where to look first. Caeser traced the failed value back through the call, but did not run anything to prove it. |
 | Proven cause | None | `root_cause.status` is `localized` and `verification_status` is `not_attempted`. No mechanism was established. |
 
@@ -109,7 +114,9 @@ and established mean.
 
 ## 5. Find the PR comment and the artifact
 
-When the workflow runs on a failed pull request check:
+Steps 1–4 used the local order fixture. This step uses a separate, real CI
+failure: `TestLateRouteRegistrationSkippedNodes` in
+[caeser-org/ceaser-demo pull request #1](https://github.com/caeser-org/ceaser-demo/pull/1).
 
 1. Open the pull request. Caeser posts or updates one comment headed
    **Caeser diagnosis**. It shows the failure, triage, root cause status,
@@ -117,8 +124,10 @@ When the workflow runs on a failed pull request check:
    **Diagnosis details** for the evidence IDs.
 2. Follow **View the workflow run and download the investigation brief** in
    the comment.
-3. On the run page, under **Artifacts**, download `caeser-diagnosis-<run-id>`.
-   It contains `caeser-brief.md` and `caeser-report.json`, the same files you
+3. On the [workflow run](https://github.com/caeser-org/ceaser-demo/actions/runs/45677116286),
+   under **Artifacts**, download `caeser-diagnosis-45677116286`. In other
+   runs the name is `caeser-diagnosis-<run-id>`. It contains
+   `caeser-brief.md` and `caeser-report.json`, the same kinds of files you
    made in step 2.
 
 See [Reports and briefs](reports.md) for every output and what to do if the
