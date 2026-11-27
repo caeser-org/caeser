@@ -70,7 +70,7 @@ actually find, not just the title.
 | Page | What it covers |
 | --- | --- |
 | [README](../README.md) | Product overview, quickstart, GitHub Actions caller example, configuration reference, architecture summary, adapter roadmap, troubleshooting reference table and documentation index. |
-| [Your first investigation](first-investigation.md) | One path from a small failing Go fixture to the JSON report and Markdown brief, how to find the PR comment and artifact, and how a stack frame, a ranked function and a proven cause differ. No model credentials needed. |
+| [Your first investigation](first-investigation.md) | One path from a small failing Go fixture to the JSON report and Markdown brief, how to find the PR comment and artifact, and how a failure location, a ranked function and a proven cause differ. No model credentials needed. |
 | [Installation](installation.md) | Building from source (Go 1.26, Git, C compiler for SQLite), installing and verifying the v0.1.2 Linux amd64 binary, the setup action, project onboarding with `caeser init`, and setup troubleshooting. |
 | [CI integration](ci-integration.md) | Onboarding with `caeser init`, `.caeser.yml` keys, the full `workflow_run` caller, every reusable-workflow input and secret, fork-PR guard, custom GitHub App comment authorship, manual runs and local reproduction. |
 | [GitHub Action](github-action.md) | The two entry points (reusable workflow vs. setup action), a custom-job example, the setup action's `version` input and `binary-path` output, checksum verification behavior, and release/Marketplace publishing. |
