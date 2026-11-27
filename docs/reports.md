@@ -25,7 +25,7 @@ and open the Markdown file.
    from the [installation guide](installation.md) to export it locally.
    This reads the JSON and does not rerun CI or call a model.
 
-```sh
+```sh  # First‑time contributor: collect CI log and generate report
 caeser brief --report caeser-report.json > caeser-brief.md
 caeser brief --report caeser-report.json --prompt > caeser-prompt.md
 ```
