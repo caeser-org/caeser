@@ -6,28 +6,9 @@ Check the [open issues](https://github.com/caeser-org/caeser/issues) for an
 existing proposal. Issues labeled `good first issue` are scoped for new
 contributors. Issues labeled `help wanted` are open for contributions.
 
-Use the four headings below when opening a proposal. This format adapts the
-[Kubernetes enhancement issue template](https://github.com/kubernetes/kubernetes/blob/master/.github/ISSUE_TEMPLATE/enhancement.yaml)
-with two sections to help contributors find the code and review the result.
-
-```markdown
-## What would you like to be added?
-
-Describe the change and what a developer should see or be able to do.
-
-## Why is this needed?
-
-Describe the current behavior, the gap it leaves, and an example of when it matters.
-
-## Where to start
-
-Link to the relevant workflow, package, docs, or fixture if you know where to look.
-
-## Acceptance criteria
-
-- [ ] State an observable result a reviewer can check.
-- [ ] Include a fallback case if missing evidence changes what Caeser can report.
-```
+Use the [feature proposal template](.github/ISSUE_TEMPLATE/feature.md).
+Describe the workflow and gap, the proposed behavior, where to start, and
+acceptance criteria a reviewer can check.
 
 For example, a request to clarify PR attribution should distinguish a passing
 base run from a base test that never ran. Point to the comment renderer and
@@ -35,8 +16,9 @@ include both cases in the acceptance criteria.
 
 ## Report a failure Caeser handles poorly
 
-Open a GitHub issue with the CI provider, language and test runner, Caeser
-version or commit, and the failing source revision. Include the command, a
+Use the [diagnosis issue template](.github/ISSUE_TEMPLATE/diagnosis.md). Include
+the CI provider, language and test runner, Caeser version or commit, and the
+failing source revision. Include the command, a
 small redacted log excerpt, and the current result compared with the result
 you expected. For a wrong source lead, name the file or function you expected
 and explain what supports it. For a missing comment, include the workflow run
